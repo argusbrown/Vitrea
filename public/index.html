@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#100d1d">
+<title>Vitrea — a game of glass, greed &amp; light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolygon points='12,1 22,8 19,22 5,22 2,8' fill='%239a66d8'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<main id="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen">
+    <div class="rosette" aria-hidden="true">
+      <span class="petal p1"></span><span class="petal p2"></span><span class="petal p3"></span>
+      <span class="petal p4"></span><span class="petal p5"></span><span class="petal p6"></span>
+      <span class="rosette-core"></span>
+    </div>
+    <h1 class="brand">Vitrea</h1>
+    <p class="tagline">a game of glass, greed &amp; light</p>
+
+    <form id="home-form" autocomplete="off">
+      <label class="field">
+        <span>Your name</span>
+        <input id="name-input" type="text" maxlength="14" placeholder="e.g. Wren" required>
+      </label>
+
+      <div id="join-banner" class="join-banner" hidden>
+        Joining game <strong id="join-banner-code"></strong>
+      </div>
+
+      <button type="submit" id="btn-primary" class="btn btn-gold">Host a new game</button>
+
+      <div class="divider" id="home-divider"><span>or join with a code</span></div>
+
+      <div class="join-row" id="join-row">
+        <input id="code-input" type="text" maxlength="4" placeholder="CODE" spellcheck="false">
+        <button type="button" id="btn-join" class="btn">Join</button>
+      </div>
+    </form>
+
+    <p class="home-foot">2–6 players · everyone plays on their own phone</p>
+  </section>
+
+  <!-- ============ LOBBY ============ -->
+  <section id="screen-lobby" class="screen" hidden>
+    <p class="lobby-kicker">gather at the workshop</p>
+    <div class="room-code" id="lobby-code" aria-label="room code"></div>
+
+    <div class="qr-frame">
+      <img id="lobby-qr" alt="QR code to join this game">
+    </div>
+    <p class="join-url" id="lobby-url"></p>
+
+    <ul class="lobby-players" id="lobby-players"></ul>
+
+    <button id="btn-start" class="btn btn-gold" hidden>Begin the game</button>
+    <p id="lobby-wait" class="muted" hidden>Waiting for the host to begin…</p>
+    <button id="btn-lobby-help" class="btn btn-ghost">How to play</button>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="screen-game" class="screen screen-game" hidden>
+    <div class="topbar">
+      <div id="players-strip" class="players-strip"></div>
+      <div class="topbar-meta">
+        <span id="round-label"></span>
+        <button id="btn-game-help" class="icon-btn" aria-label="rules">?</button>
+      </div>
+    </div>
+
+    <div class="kiln" id="kiln">
+      <p class="kiln-title" id="kiln-title"></p>
+      <div class="hand-row" id="hand-row"></div>
+      <p class="kiln-hint" id="kiln-hint"></p>
+      <div class="kiln-actions" id="kiln-actions"></div>
+    </div>
+
+    <div class="my-board">
+      <div class="window-arch" id="my-window"></div>
+      <p class="board-caption" id="board-caption"></p>
+    </div>
+  </section>
+
+  <!-- ============ END ============ -->
+  <section id="screen-end" class="screen" hidden>
+    <p class="lobby-kicker">the light settles</p>
+    <h2 class="end-title" id="end-title"></h2>
+    <div class="winner-window" id="winner-window"></div>
+    <ol class="standings" id="standings"></ol>
+    <button id="btn-again" class="btn btn-gold" hidden>Play again</button>
+    <p id="end-wait" class="muted" hidden>Waiting for the host…</p>
+  </section>
+
+</main>
+
+<!-- ============ OVERLAYS ============ -->
+<div class="overlay" id="overlay-peek" hidden>
+  <div class="overlay-card">
+    <h3 id="peek-title"></h3>
+    <div id="peek-window"></div>
+    <p class="muted" id="peek-stats"></p>
+    <button class="btn" data-close>Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-help" hidden>
+  <div class="overlay-card overlay-help">
+    <h3>How to play</h3>
+    <div class="rules">
+      <p><strong>On your turn</strong>, draw glass shards from the kiln one at a time. Every shard is revealed to all.</p>
+      <p><strong>Crack!</strong> Draw a colour you already drew this turn and your glass shatters — you lose every shard you drew and your turn ends.</p>
+      <p><strong>Stop in time</strong> and you set each shard into your window. Same colours may never touch side-by-side. A <em>prism</em> is wild and may sit anywhere.</p>
+      <p><strong>Perfect Spectrum:</strong> survive 6 draws in one turn and score +7 on the spot.</p>
+      <ul class="score-list">
+        <li><b>+1</b> each shard set in your window</li>
+        <li><b>+3</b> socket filled with its matching colour</li>
+        <li><b>+4</b> completed row · <b>+6</b> completed column</li>
+        <li><b>+7</b> Perfect Spectrum</li>
+        <li><b>+10</b> first to finish their window</li>
+      </ul>
+      <p>When someone completes their window, the round is played out so all have equal turns — then the brightest window wins.</p>
+    </div>
+    <button class="btn" data-close>Close</button>
+  </div>
+</div>
+
+<div id="banner" class="banner" hidden><span id="banner-text"></span></div>
+<div id="toasts" class="toasts"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

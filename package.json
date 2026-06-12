@@ -1,0 +1,22 @@
+{
+  "name": "vitrea",
+  "version": "1.0.0",
+  "description": "Vitrea — a push-your-luck stained-glass drafting game for 2-6 phones on your local network",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node test/game.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:33171/git/argusbrown/FableTest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "ws": "^8.21.0"
+  }
+}
