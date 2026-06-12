@@ -231,6 +231,14 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 
 .home-foot { margin-top: 34px; color: var(--ink-dim); font-size: 0.8rem; }
 
+.version-line {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  opacity: 0.65;
+  letter-spacing: 0.04em;
+}
+
 /* ============================================================
    LOBBY
    ============================================================ */

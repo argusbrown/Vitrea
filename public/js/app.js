@@ -641,6 +641,10 @@ function renderEnd() {
 /* ---------------- home screen wiring ---------------- */
 
 function setupHome() {
+  const v = window.VITREA_VERSION || {};
+  const build = !v.build || v.build === '__BUILD__' ? 'dev' : v.build;
+  $('#version-line').textContent = `v${v.semver || '?'} · ${build}`;
+
   const params = new URLSearchParams(location.search);
   const roomFromUrl = (params.get('room') || '').toUpperCase().trim();
   const nameInput = $('#name-input');

@@ -22,6 +22,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp build version
+        run: sed -i "s/__BUILD__/$(git rev-parse --short HEAD) · $(date -u +%Y-%m-%d)/" public/js/version.js
       - uses: actions/configure-pages@v5
         with:
           enablement: true
