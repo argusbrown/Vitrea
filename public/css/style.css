@@ -250,6 +250,31 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   letter-spacing: 0.04em;
 }
 
+.btn-nettest { margin-top: 14px; font-size: 0.8rem; padding: 7px 14px; }
+
+.nettest-list {
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.nettest-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(12, 9, 24, 0.6);
+  border: 1px solid rgba(201, 164, 92, 0.18);
+  border-radius: 10px;
+}
+.nt-status { font-weight: 700; color: var(--ink-dim); }
+.nt-status.ok { color: var(--emerald-hi); }
+.nt-status.bad { color: var(--ruby-hi); }
+.nettest-verdict { font-size: 0.88rem; line-height: 1.45; color: var(--ink); }
+
 /* ============================================================
    LOBBY
    ============================================================ */

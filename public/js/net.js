@@ -417,5 +417,5 @@ const VitreaNet = (() => {
     localStorage.removeItem(HOST_ROOM_KEY);
   }
 
-  return { host, join, savedHostRoom, clearHostRoom, joinUrlFor };
+  return { host, join, savedHostRoom, clearHostRoom, joinUrlFor, peerOptions, iceConfig: ICE_CONFIG };
 })();
