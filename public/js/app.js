@@ -714,6 +714,31 @@ function resumeIfPossible() {
   }
 }
 
+let netTestRunning = false;
+async function runConnectionCheck() {
+  $('#overlay-nettest').hidden = false;
+  if (netTestRunning) return;
+  netTestRunning = true;
+  document.querySelectorAll('.nettest-list .nt-status').forEach((el) => {
+    el.textContent = '…';
+    el.className = 'nt-status';
+  });
+  $('#nettest-verdict').textContent = 'Testing this network…';
+  const verdict = await VitreaNetTest.run((rowId, status) => {
+    const el = document.querySelector(`.nettest-list li[data-row="${rowId}"] .nt-status`);
+    if (!el) return;
+    if (status === 'testing') {
+      el.textContent = 'testing…';
+      el.className = 'nt-status';
+    } else {
+      el.textContent = status === 'ok' ? '✓' : '✗';
+      el.className = 'nt-status ' + (status === 'ok' ? 'ok' : 'bad');
+    }
+  });
+  $('#nettest-verdict').textContent = verdict;
+  netTestRunning = false;
+}
+
 /* ---------------- global wiring ---------------- */
 
 function setup() {
@@ -724,6 +749,7 @@ function setup() {
   $('#btn-lobby-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
   $('#btn-leave-lobby').addEventListener('click', leaveGame);
   $('#btn-leave-end').addEventListener('click', leaveGame);
+  $('#btn-nettest').addEventListener('click', runConnectionCheck);
 
   document.querySelectorAll('.overlay').forEach((overlay) => {
     overlay.addEventListener('click', (e) => {

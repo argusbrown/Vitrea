@@ -48,6 +48,7 @@
     </form>
 
     <p class="home-foot">2–6 players · phones connect to each other directly</p>
+    <button id="btn-nettest" class="btn btn-ghost btn-nettest" type="button">Connection check</button>
     <p class="version-line" id="version-line"></p>
   </section>
 
@@ -139,6 +140,20 @@
   </div>
 </div>
 
+<div class="overlay" id="overlay-nettest" hidden>
+  <div class="overlay-card">
+    <h3>Connection check</h3>
+    <ul class="nettest-list">
+      <li data-row="signal"><span>Matchmaking service</span><b class="nt-status">…</b></li>
+      <li data-row="stun"><span>Address discovery (STUN)</span><b class="nt-status">…</b></li>
+      <li data-row="turn0"><span>Relay 1 — PeerJS (UDP)</span><b class="nt-status">…</b></li>
+      <li data-row="turn1"><span>Relay 2 — OpenRelay (TCP/443)</span><b class="nt-status">…</b></li>
+    </ul>
+    <p class="nettest-verdict" id="nettest-verdict">Testing this network…</p>
+    <button class="btn" data-close>Close</button>
+  </div>
+</div>
+
 <div id="banner" class="banner" hidden><span id="banner-text"></span></div>
 <div id="toasts" class="toasts"></div>
 
@@ -147,6 +162,7 @@
 <script src="js/vendor/peerjs.min.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/net.js"></script>
+<script src="js/nettest.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
