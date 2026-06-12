@@ -42,6 +42,19 @@ If the public PeerJS cloud is ever unreachable, you can run your own signaling
 server (`npx peer --port 9000 --path /vitrea`) and append
 `?ps=yourhost:9000` to the game URL.
 
+### If a phone can't join
+
+Joining now reports exactly where it got stuck instead of hanging:
+
+- **"Could not reach the matchmaking service"** — that phone has no working
+  path to the internet (or something is blocking `peerjs.com`).
+- **"…couldn't open a direct link between the phones"** — the network is
+  blocking device-to-device traffic. Guest/hotel/office Wi-Fi often does this
+  (AP isolation). Fix: have everyone use cellular data, or have the host start
+  a phone hotspot and the others join it.
+- Make sure the **host's screen stays on** while people are joining — the game
+  lives in the host's browser tab.
+
 ## How to play
 
 On your turn, draw glass shards from the kiln one at a time. Every draw is
