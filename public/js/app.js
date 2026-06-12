@@ -75,12 +75,21 @@ function handleMessage(msg) {
 
 let lastStatusToast = 0;
 function handleStatus(kind, detail) {
+  if (kind === 'linking') {
+    setBusyLabel('Found the game — connecting…');
+    return;
+  }
   const now = Date.now();
   if (now - lastStatusToast < 4000) return;
   lastStatusToast = now;
   if (kind === 'reconnecting') toast('Connection lost — reconnecting…', true);
   else if (kind === 'signal-lost') toast('Matchmaking link lost — rejoining…', true);
   else if (kind === 'error' && detail) toast(detail, true);
+}
+
+function setBusyLabel(label) {
+  const btn = $('#btn-primary');
+  if (btn.disabled) btn.textContent = label;
 }
 
 async function startHosting(name, resume) {

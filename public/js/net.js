@@ -210,6 +210,14 @@ const VitreaNet = (() => {
       let attempts = 0;
       let settled = false;
 
+      // The signaling websocket can stall without ever erroring; don't let
+      // the host button hang forever.
+      const killer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new Error('Could not reach the matchmaking service — check your internet connection and try again.'));
+      }, 20000);
+
       function announce() {
         const peer = new Peer(PEER_PREFIX + room.code, peerOptions());
 
@@ -218,6 +226,7 @@ const VitreaNet = (() => {
           const localClient = { send: (msg) => queueMicrotask(() => onMessage(msg)) };
           room.attach(room.hostId, localClient);
           settled = true;
+          clearTimeout(killer);
           resolve({
             code: room.code,
             send: (msg) => room.handle(localClient, msg, room.hostId),
@@ -252,6 +261,7 @@ const VitreaNet = (() => {
           }
           if (!settled) {
             settled = true;
+            clearTimeout(killer);
             reject(new Error(friendlyPeerError(err)));
           } else if (onStatus) {
             onStatus('error', friendlyPeerError(err));
@@ -276,16 +286,40 @@ const VitreaNet = (() => {
       let stopped = false;
       let retryMs = 1000;
       let retryTimer = null;
+      let stage = 'signal'; // signal -> link -> joined
+
+      function fail(message) {
+        if (everConnected || stopped) return;
+        stopped = true;
+        clearTimeout(killer);
+        try { peer.destroy(); } catch { /* already gone */ }
+        reject(new Error(message));
+      }
+
+      // A blocked WebRTC link often produces NO event at all — without this,
+      // the join button would hang forever with no explanation.
+      const killer = setTimeout(() => {
+        fail(stage === 'signal'
+          ? 'Could not reach the matchmaking service — check your internet connection and try again.'
+          : "Found the game, but couldn't open a direct link between the phones. This network may block device-to-device traffic (common on guest/hotel Wi-Fi) — try a phone hotspot or another network.");
+      }, 25000);
 
       const transport = {
         code,
         send: (msg) => { if (conn && conn.open) conn.send(msg); },
-        close: () => { stopped = true; peer.destroy(); },
+        close: () => { stopped = true; clearTimeout(killer); peer.destroy(); },
       };
 
       function connect() {
         if (stopped) return;
-        conn = peer.connect(PEER_PREFIX + code, { reliable: true });
+        stage = 'link';
+        if (onStatus) onStatus('linking');
+        conn = peer.connect(PEER_PREFIX + code, { reliable: true, serialization: 'json' });
+        conn.on('iceStateChanged', (state) => {
+          if (state === 'failed' && !everConnected) {
+            fail('The phones found each other but the direct link was blocked. This network may block device-to-device traffic — try a phone hotspot or another network.');
+          }
+        });
         conn.on('open', () => {
           retryMs = 1000;
           conn.send(myToken ? { type: 'rejoin', token: myToken } : { type: 'join', name });
@@ -293,9 +327,11 @@ const VitreaNet = (() => {
         conn.on('data', (msg) => {
           if (!msg || typeof msg.type !== 'string') return;
           if (msg.type === 'joined') {
+            stage = 'joined';
             myToken = msg.you.token;
             if (!everConnected) {
               everConnected = true;
+              clearTimeout(killer);
               resolve(transport);
             }
           }
@@ -322,17 +358,13 @@ const VitreaNet = (() => {
       peer.on('error', (err) => {
         if (err.type === 'peer-unavailable') {
           if (!everConnected) {
-            stopped = true;
-            reject(new Error('No game found with that code.'));
+            fail("No game found with that code — is the host's lobby still open?");
           } else {
             scheduleRetry(); // host page may be reloading — keep looking for it
           }
           return;
         }
-        if (!everConnected) {
-          stopped = true;
-          reject(new Error(friendlyPeerError(err)));
-        }
+        if (!everConnected) fail(friendlyPeerError(err));
       });
     });
   }
