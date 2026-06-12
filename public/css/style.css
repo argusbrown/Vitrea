@@ -258,12 +258,14 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   background: linear-gradient(160deg, var(--gold-hi), var(--gold-lo));
   box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
 }
-.qr-frame img {
+.qr-frame canvas {
   display: block;
   width: min(58vw, 240px);
   height: auto;
   border-radius: 10px;
 }
+
+.lobby-foot { display: flex; gap: 10px; }
 
 .join-url { font-size: 0.85rem; color: var(--ink-dim); word-break: break-all; }
 

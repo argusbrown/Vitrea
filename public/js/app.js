@@ -2,11 +2,13 @@
 
 /* ============================================================
    Vitrea client — single state-driven render, no frameworks.
+   The host's tab also runs the authoritative room (see net.js);
+   this file only ever talks the client protocol.
    ============================================================ */
 
 const $ = (sel) => document.querySelector(sel);
 
-const SESSION_KEY = 'vitrea-session';
+const SESSION_KEY = 'vitrea-session'; // {role, code, token}
 const NAME_KEY = 'vitrea-name';
 
 const ui = {
@@ -17,22 +19,22 @@ const ui = {
 };
 
 const state = {
-  ws: null,
-  connected: false,
-  retryMs: 500,
+  transport: null, // {send} once hosting/joined
+  role: null, // 'host' | 'guest'
   you: null, // {id, token}
-  room: null, // last server snapshot
+  room: null, // last room snapshot
   lastSeq: 0, // last animated game event
   firstSnapshot: true, // skip animating history on (re)join
   selected: null, // selected hand shard index while placing
   prevHand: [], // hand before the latest snapshot, for the shatter animation
   bustFreeze: false, // keep the shattering hand on screen briefly
+  busyConnecting: false,
 };
 
 /* ---------------- session ---------------- */
 
 function saveSession(code, token) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ code, token }));
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ role: state.role, code, token }));
 }
 function loadSession() {
   try {
@@ -41,48 +43,14 @@ function loadSession() {
     return null;
   }
 }
-function clearSession() {
+function leaveGame() {
   localStorage.removeItem(SESSION_KEY);
+  VitreaNet.clearHostRoom();
+  const url = new URL(location.pathname, location.origin);
+  location.replace(url.toString()); // drop ?room=… and start fresh
 }
 
-/* ---------------- websocket ---------------- */
-
-function connect() {
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${proto}://${location.host}`);
-  state.ws = ws;
-
-  ws.onopen = () => {
-    state.connected = true;
-    state.retryMs = 500;
-    const session = loadSession();
-    if (session && session.code && session.token) {
-      send({ type: 'rejoin', code: session.code, token: session.token });
-    }
-  };
-
-  ws.onmessage = (e) => {
-    let msg;
-    try {
-      msg = JSON.parse(e.data);
-    } catch {
-      return;
-    }
-    handleMessage(msg);
-  };
-
-  ws.onclose = () => {
-    state.connected = false;
-    setTimeout(connect, state.retryMs);
-    state.retryMs = Math.min(state.retryMs * 2, 8000);
-  };
-}
-
-function send(msg) {
-  if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-    state.ws.send(JSON.stringify(msg));
-  }
-}
+/* ---------------- connection ---------------- */
 
 function handleMessage(msg) {
   switch (msg.type) {
@@ -96,13 +64,82 @@ function handleMessage(msg) {
       break;
     case 'error':
       if (msg.fatal) {
-        clearSession();
+        localStorage.removeItem(SESSION_KEY);
         state.room = null;
         showScreen('home');
       }
       toast(msg.message, true);
       break;
   }
+}
+
+let lastStatusToast = 0;
+function handleStatus(kind, detail) {
+  const now = Date.now();
+  if (now - lastStatusToast < 4000) return;
+  lastStatusToast = now;
+  if (kind === 'reconnecting') toast('Connection lost — reconnecting…', true);
+  else if (kind === 'signal-lost') toast('Matchmaking link lost — rejoining…', true);
+  else if (kind === 'error' && detail) toast(detail, true);
+}
+
+async function startHosting(name, resume) {
+  if (state.busyConnecting) return;
+  state.busyConnecting = true;
+  state.role = 'host';
+  setHomeBusy(true, 'Opening the workshop…');
+  try {
+    state.transport = await VitreaNet.host({
+      name,
+      resume,
+      onMessage: handleMessage,
+      onStatus: handleStatus,
+    });
+  } catch (err) {
+    toast(err.message, true);
+    if (resume) leaveGame();
+  } finally {
+    state.busyConnecting = false;
+    setHomeBusy(false);
+  }
+}
+
+async function joinGame(code, { name, token } = {}) {
+  if (state.busyConnecting) return;
+  state.busyConnecting = true;
+  state.role = 'guest';
+  setHomeBusy(true, 'Knocking on the door…');
+  try {
+    state.transport = await VitreaNet.join({
+      code,
+      name,
+      token,
+      onMessage: handleMessage,
+      onStatus: handleStatus,
+    });
+  } catch (err) {
+    toast(err.message, true);
+    if (token) localStorage.removeItem(SESSION_KEY);
+  } finally {
+    state.busyConnecting = false;
+    setHomeBusy(false);
+  }
+}
+
+function setHomeBusy(busy, label) {
+  const btn = $('#btn-primary');
+  btn.disabled = busy;
+  if (busy) {
+    btn.dataset.label = btn.dataset.label || btn.textContent;
+    btn.textContent = label;
+  } else if (btn.dataset.label) {
+    btn.textContent = btn.dataset.label;
+  }
+  $('#btn-join').disabled = busy;
+}
+
+function send(msg) {
+  if (state.transport) state.transport.send(msg);
 }
 
 function applyState(room) {
@@ -129,11 +166,6 @@ function applyState(room) {
 
 /* ---------------- helpers ---------------- */
 
-function me() {
-  return state.room && state.you
-    ? state.room.players.find((p) => p.id === state.you.id)
-    : null;
-}
 function game() {
   return state.room && state.room.game;
 }
@@ -273,6 +305,29 @@ function toast(text, isError = false) {
   setTimeout(() => el.remove(), 2700);
 }
 
+/* ---------------- QR rendering ---------------- */
+
+function renderQr(canvas, text) {
+  if (canvas.dataset.encoded === text) return;
+  canvas.dataset.encoded = text;
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount();
+  const scale = 10;
+  const quiet = 2;
+  canvas.width = canvas.height = (n + quiet * 2) * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f4ead8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#1b1430';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+    }
+  }
+}
+
 /* ---------------- rendering ---------------- */
 
 function showScreen(name) {
@@ -312,8 +367,8 @@ function gemDot(i, size = 16) {
 function renderLobby() {
   const room = state.room;
   $('#lobby-code').textContent = room.code;
-  $('#lobby-qr').src = room.qrDataUrl;
-  $('#lobby-url').textContent = room.joinUrl;
+  renderQr($('#lobby-qr'), room.joinUrl);
+  $('#lobby-url').textContent = room.joinUrl.replace(/^https?:\/\//, '');
 
   const list = $('#lobby-players');
   list.innerHTML = '';
@@ -339,6 +394,7 @@ function renderLobby() {
   $('#btn-start').textContent =
     room.players.length < 2 ? 'Waiting for players…' : 'Begin the game';
   $('#lobby-wait').hidden = host;
+  $('#lobby-host-note').hidden = !host;
 }
 
 function shardEl(shard, extraClass = '') {
@@ -594,12 +650,10 @@ function setupHome() {
     const name = nameInput.value.trim();
     if (!name) return nameInput.focus();
     localStorage.setItem(NAME_KEY, name);
-    clearSession();
-    if (roomFromUrl) {
-      send({ type: 'join', code: roomFromUrl, name });
-    } else {
-      send({ type: 'create', name });
-    }
+    localStorage.removeItem(SESSION_KEY);
+    VitreaNet.clearHostRoom();
+    if (roomFromUrl) joinGame(roomFromUrl, { name });
+    else startHosting(name);
   });
 
   $('#btn-join').addEventListener('click', () => {
@@ -608,9 +662,27 @@ function setupHome() {
     if (!name) return nameInput.focus();
     if (code.length !== 4) return $('#code-input').focus();
     localStorage.setItem(NAME_KEY, name);
-    clearSession();
-    send({ type: 'join', code, name });
+    localStorage.removeItem(SESSION_KEY);
+    VitreaNet.clearHostRoom();
+    joinGame(code, { name });
   });
+}
+
+// Pick up where we left off: a host page reload resurrects the whole room,
+// a guest reconnects with their token.
+function resumeIfPossible() {
+  const session = loadSession();
+  if (!session) return;
+  if (session.role === 'host') {
+    const saved = VitreaNet.savedHostRoom();
+    if (saved && saved.code === session.code) {
+      state.role = 'host';
+      startHosting(null, saved);
+    }
+  } else if (session.role === 'guest' && session.code && session.token) {
+    state.role = 'guest';
+    joinGame(session.code, { token: session.token });
+  }
 }
 
 /* ---------------- global wiring ---------------- */
@@ -621,6 +693,8 @@ function setup() {
   $('#btn-again').addEventListener('click', () => send({ type: 'playAgain' }));
   $('#btn-game-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
   $('#btn-lobby-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
+  $('#btn-leave-lobby').addEventListener('click', leaveGame);
+  $('#btn-leave-end').addEventListener('click', leaveGame);
 
   document.querySelectorAll('.overlay').forEach((overlay) => {
     overlay.addEventListener('click', (e) => {
@@ -628,7 +702,7 @@ function setup() {
     });
   });
 
-  connect();
+  resumeIfPossible();
 }
 
 setup();

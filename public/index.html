@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="css/style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolygon points='12,1 22,8 19,22 5,22 2,8' fill='%239a66d8'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -35,7 +35,7 @@
         Joining game <strong id="join-banner-code"></strong>
       </div>
 
-      <button type="submit" id="btn-primary" class="btn btn-gold">Host a new game</button>
+      <button type="submit" id="btn-primary" class="btn btn-gold">Host a game on this phone</button>
 
       <div class="divider" id="home-divider"><span>or join with a code</span></div>
 
@@ -45,7 +45,7 @@
       </div>
     </form>
 
-    <p class="home-foot">2–6 players · everyone plays on their own phone</p>
+    <p class="home-foot">2–6 players · phones connect to each other directly</p>
   </section>
 
   <!-- ============ LOBBY ============ -->
@@ -54,7 +54,7 @@
     <div class="room-code" id="lobby-code" aria-label="room code"></div>
 
     <div class="qr-frame">
-      <img id="lobby-qr" alt="QR code to join this game">
+      <canvas id="lobby-qr" aria-label="QR code to join this game"></canvas>
     </div>
     <p class="join-url" id="lobby-url"></p>
 
@@ -62,7 +62,11 @@
 
     <button id="btn-start" class="btn btn-gold" hidden>Begin the game</button>
     <p id="lobby-wait" class="muted" hidden>Waiting for the host to begin…</p>
-    <button id="btn-lobby-help" class="btn btn-ghost">How to play</button>
+    <p id="lobby-host-note" class="muted" hidden>The game lives on this phone — keep this page open.</p>
+    <div class="lobby-foot">
+      <button id="btn-lobby-help" class="btn btn-ghost">How to play</button>
+      <button id="btn-leave-lobby" class="btn btn-ghost">Leave</button>
+    </div>
   </section>
 
   <!-- ============ GAME ============ -->
@@ -96,6 +100,7 @@
     <ol class="standings" id="standings"></ol>
     <button id="btn-again" class="btn btn-gold" hidden>Play again</button>
     <p id="end-wait" class="muted" hidden>Waiting for the host…</p>
+    <button id="btn-leave-end" class="btn btn-ghost">Leave game</button>
   </section>
 
 </main>
@@ -134,6 +139,10 @@
 <div id="banner" class="banner" hidden><span id="banner-text"></span></div>
 <div id="toasts" class="toasts"></div>
 
-<script src="/js/app.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/vendor/peerjs.min.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/net.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

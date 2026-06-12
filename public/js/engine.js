@@ -1,7 +1,13 @@
 'use strict';
 
 // Vitrea — core game logic. Pure state machine, no I/O.
+// Runs in the host's browser (authoritative) and in Node for tests.
 // All information is public, so a single snapshot is broadcast to every client.
+
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.VitreaEngine = factory();
+})(typeof self !== 'undefined' ? self : globalThis, function () {
 
 const COLORS = ['ruby', 'amber', 'emerald', 'sapphire', 'amethyst', 'moonstone'];
 const PRISM = 'prism';
@@ -254,6 +260,31 @@ class Game {
     this.emit('gameOver', { standings });
   }
 
+  // Full internal state, so a reloaded host page can resurrect the game.
+  toJSON() {
+    return {
+      bag: this.bag,
+      discardPile: this.discardPile,
+      players: this.players,
+      phase: this.phase,
+      turnSeat: this.turnSeat,
+      turnPhase: this.turnPhase,
+      hand: this.hand,
+      round: this.round,
+      finishTriggered: this.finishTriggered,
+      events: this.events,
+      eventSeq: this.eventSeq,
+      standings: this.standings || null,
+    };
+  }
+
+  static fromJSON(data) {
+    const g = Object.create(Game.prototype);
+    Object.assign(g, data);
+    if (g.standings === null) delete g.standings;
+    return g;
+  }
+
   snapshot() {
     return {
       phase: this.phase,
@@ -295,4 +326,5 @@ class Game {
   }
 }
 
-module.exports = { Game, COLORS, PRISM, ROWS, COLS };
+return { Game, COLORS, PRISM, ROWS, COLS };
+});

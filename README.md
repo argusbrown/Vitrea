@@ -1,26 +1,46 @@
 # Vitrea
 
 *A game of glass, greed & light* — a push-your-luck, stained-glass drafting game
-for **2–6 players**, played on your phones over your local network.
+for **2–6 players**, played on phones, anywhere.
 
 Vitrea blends the bits we love from Azul, Flip 7 and Sagrada: drafting from a
 shared pool, pressing your luck one draw too far, and fitting what survives
 into a personal stained-glass window under placement constraints.
 
-## Run it
+## How it works
 
-```bash
-npm install
-npm start
-```
+**There is no game server.** The whole game is a static web page; whoever taps
+*Host a game on this phone* runs the authoritative game inside their browser
+tab, and everyone else's phone connects **directly to it over WebRTC**
+(peer-to-peer, via [PeerJS](https://peerjs.com)). A public signaling service is
+used once to introduce the phones to each other; after that, game traffic flows
+phone-to-phone.
 
-Then open the printed network address (e.g. `http://192.168.1.20:3000`) on your
-phone, host a game, and let everyone else **scan the QR code** in the lobby to
-join. Everyone needs to be on the same Wi-Fi network.
+So you can play at a pub, a campsite with cell coverage, or on a train:
 
-- `PORT=8080 npm start` to use a different port.
-- If phones can't connect, check that your machine's firewall allows incoming
-  connections on the port.
+1. Open the game page on your phone and **host a game**.
+2. Friends **scan the QR code** on your screen (or type the 4-letter code on
+   the same page).
+3. Play. Everyone just needs an internet connection — any network, no shared
+   Wi-Fi required.
+
+The host's phone keeps the game in `localStorage`, so even if the host's
+browser reloads, the room resurrects and everyone reconnects automatically.
+Guests who drop (phone locked, tunnel, …) rejoin with their seat and score
+intact.
+
+## Deploying / running it
+
+The game is the `public/` folder — plain static files, no build step. Host it
+on anything that serves files over HTTPS and share that URL:
+
+- **GitHub Pages, Netlify, Cloudflare Pages, …** — point it at `public/`, done.
+- For local development (or LAN play at home): `npm start` serves `public/` on
+  port 3000 with zero dependencies, and prints your LAN address.
+
+If the public PeerJS cloud is ever unreachable, you can run your own signaling
+server (`npx peer --port 9000 --path /vitrea`) and append
+`?ps=yourhost:9000` to the game URL.
 
 ## How to play
 
@@ -48,22 +68,23 @@ revealed to all players.
 When someone completes their window, the round is played out so everyone has
 had equal turns — then the brightest window wins.
 
-## Tech
+## Code layout
 
-- Node.js server (`server/`) — plain `http` + [`ws`](https://github.com/websockets/ws)
-  WebSockets, authoritative game engine, QR codes via
-  [`qrcode`](https://github.com/soldair/node-qrcode). No database; rooms live in memory.
-- Vanilla HTML/CSS/JS client (`public/`) — no framework, no build step.
-- Players can drop and rejoin (state lives server-side; the phone keeps a
-  session token). If the active player vanishes, the host can skip their turn.
+- `public/js/engine.js` — the pure game engine (runs in the host's browser;
+  also loaded by Node for tests). Bag composition, scoring values and board
+  size are constants at the top.
+- `public/js/net.js` — the authoritative Room (host side) and the WebRTC
+  host/guest transports, including reconnect and host-resume logic.
+- `public/js/app.js` — UI: state-driven rendering, no frameworks.
+- `public/js/vendor/` — vendored [PeerJS](https://github.com/peers/peerjs) and
+  [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT).
+- `server/index.js` — optional zero-dependency static server for development.
 
 ### Tests
 
 ```bash
-npm test               # monte-carlo + unit tests for the game engine
-node test/e2e.test.js  # boots the real server and plays a full game over WebSockets
+npm test                  # monte-carlo + unit tests for the game engine
+node test/browser.e2e.js  # full P2P game in two headless phone browsers,
+                          # incl. a mid-game host reload; needs:
+                          # npm i --no-save peer playwright
 ```
-
-`test/screenshots.js` and `test/fullgame.browser.js` are optional visual dev
-aids that drive the UI with phone-sized headless browsers; they need
-`npm i --no-save playwright` plus a Playwright chromium.

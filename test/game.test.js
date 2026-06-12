@@ -3,7 +3,7 @@
 // Monte-carlo exercise of the Vitrea engine: play many full games with
 // random (but legal) moves and assert the invariants hold throughout.
 
-const { Game, COLORS, PRISM, ROWS, COLS } = require('../server/game');
+const { Game, COLORS, PRISM, ROWS, COLS } = require('../public/js/engine');
 
 const TOTAL_SHARDS = COLORS.length * 16 + 8;
 
@@ -123,6 +123,17 @@ function playRandomGame(numPlayers, seedTag) {
   g.hand = ['ruby'];
   g.place('a', 0, 0, 0);
   assert(p.score === 1 + 3, `socket match scores (got ${p.score})`);
+}
+
+// serialization round-trip mid-game keeps playing identically
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.draw('a');
+  const revived = Game.fromJSON(JSON.parse(JSON.stringify(g.toJSON())));
+  assert(revived.current().id === g.current().id, 'revived turn preserved');
+  assert(JSON.stringify(revived.snapshot()) === JSON.stringify(g.snapshot()), 'revived snapshot identical');
+  revived.stop('a'); // must not throw; game continues from restored state
+  assert(revived.turnPhase === 'place' || revived.turnSeat === 1, 'revived game playable');
 }
 
 // --- monte carlo -----------------------------------------------------------
