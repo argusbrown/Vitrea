@@ -67,8 +67,10 @@ function handleMessage(msg) {
         localStorage.removeItem(SESSION_KEY);
         state.room = null;
         showScreen('home');
+        showHomeError(msg.message);
+      } else {
+        toast(msg.message, true);
       }
-      toast(msg.message, true);
       break;
   }
 }
@@ -92,10 +94,22 @@ function setBusyLabel(label) {
   if (btn.disabled) btn.textContent = label;
 }
 
+// Connection problems stay on screen until the next attempt — a toast is
+// too short-lived to read a diagnostic.
+function showHomeError(message) {
+  const el = $('#home-error');
+  el.textContent = message;
+  el.hidden = false;
+}
+function clearHomeError() {
+  $('#home-error').hidden = true;
+}
+
 async function startHosting(name, resume) {
   if (state.busyConnecting) return;
   state.busyConnecting = true;
   state.role = 'host';
+  clearHomeError();
   setHomeBusy(true, 'Opening the workshop…');
   try {
     state.transport = await VitreaNet.host({
@@ -105,7 +119,7 @@ async function startHosting(name, resume) {
       onStatus: handleStatus,
     });
   } catch (err) {
-    toast(err.message, true);
+    showHomeError(err.message);
     if (resume) leaveGame();
   } finally {
     state.busyConnecting = false;
@@ -117,6 +131,7 @@ async function joinGame(code, { name, token } = {}) {
   if (state.busyConnecting) return;
   state.busyConnecting = true;
   state.role = 'guest';
+  clearHomeError();
   setHomeBusy(true, 'Knocking on the door…');
   try {
     state.transport = await VitreaNet.join({
@@ -127,7 +142,7 @@ async function joinGame(code, { name, token } = {}) {
       onStatus: handleStatus,
     });
   } catch (err) {
-    toast(err.message, true);
+    showHomeError(err.message);
     if (token) localStorage.removeItem(SESSION_KEY);
   } finally {
     state.busyConnecting = false;
@@ -310,8 +325,9 @@ function toast(text, isError = false) {
   const el = document.createElement('div');
   el.className = 'toast' + (isError ? ' err' : '');
   el.textContent = text;
+  if (isError) el.style.animationDuration = '5.5s'; // errors deserve reading time
   box.appendChild(el);
-  setTimeout(() => el.remove(), 2700);
+  setTimeout(() => el.remove(), isError ? 5600 : 2700);
 }
 
 /* ---------------- QR rendering ---------------- */

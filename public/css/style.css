@@ -210,6 +210,17 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 }
 .join-banner strong { color: var(--gold-hi); letter-spacing: 0.2em; }
 
+.home-error {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--ruby-hi);
+  background: rgba(226, 69, 95, 0.08);
+  border: 1px solid rgba(226, 69, 95, 0.45);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
 .divider {
   display: flex; align-items: center; gap: 12px;
   color: var(--ink-dim); font-size: 0.8rem;
