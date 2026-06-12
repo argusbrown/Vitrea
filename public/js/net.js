@@ -32,11 +32,35 @@ const VitreaNet = (() => {
 
   // Optional override of the signaling server: ?ps=host:port (used by the
   // automated tests, and handy if the public PeerJS cloud is ever down).
+  // The ICE list extends PeerJS's default (one STUN + UDP-only TURN) with
+  // extra STUN and TCP/443 relays so restrictive networks can still connect.
+  const ICE_CONFIG = {
+    iceServers: [
+      { urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
+      {
+        urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'],
+        username: 'peerjs',
+        credential: 'peerjsp',
+      },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp',
+          'turns:openrelay.metered.ca:443',
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+    ],
+  };
+
   function peerOptions() {
+    const base = { config: ICE_CONFIG };
     const ps = new URLSearchParams(location.search).get('ps');
-    if (!ps) return {};
+    if (!ps) return base;
     const [host, port] = ps.split(':');
-    return { host, port: Number(port) || 443, path: '/vitrea', secure: location.protocol === 'https:' };
+    return { ...base, host, port: Number(port) || 443, path: '/vitrea', secure: location.protocol === 'https:' };
   }
 
   function joinUrlFor(code) {
