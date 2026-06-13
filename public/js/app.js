@@ -631,6 +631,8 @@ function renderEnd() {
   const g = room.game;
   if (!g || !g.standings) return;
 
+  $('#toasts').innerHTML = ''; // clear leftover score toasts so they don't cover the standings
+
   const winner = g.players[g.standings[0]];
   const mine = state.you && winner.id === state.you.id;
   $('#end-title').textContent = mine ? 'Your window shines brightest' : `${winner.name} wins`;
