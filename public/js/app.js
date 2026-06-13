@@ -236,8 +236,9 @@ function legalCells(player, shard, rules) {
   return out;
 }
 
-// Which of the two diagonals are fully filled (square boards only).
-function diagComplete(player, rules) {
+// Which diagonals actually score (square boards only). Both diagonals share
+// the centre cell; a solid tile there carries only one of them, a prism both.
+function scoredDiagonals(player, rules) {
   if (rules.rows !== rules.cols) return { main: false, anti: false };
   const w = player.window;
   const n = rules.rows;
@@ -246,6 +247,10 @@ function diagComplete(player, rules) {
   for (let i = 0; i < n; i++) {
     if (w[i][i] === null) main = false;
     if (w[i][n - 1 - i] === null) anti = false;
+  }
+  if (main && anti && n % 2 === 1) {
+    const mid = (n - 1) / 2;
+    if (w[mid][mid] !== rules.prism) return { main: true, anti: false }; // solid centre: one only
   }
   return { main, anti };
 }
@@ -267,7 +272,7 @@ function lineBreakdown(player, rules) {
     const s = w[r][c];
     if (s && (s === rules.prism || s === player.sockets[key])) sockets++;
   }
-  const d = diagComplete(player, rules);
+  const d = scoredDiagonals(player, rules);
   return { rows, cols, diags: (d.main ? 1 : 0) + (d.anti ? 1 : 0), sockets };
 }
 
@@ -495,7 +500,7 @@ function windowEl(player, rules, { mini = false, interactive = false } = {}) {
       ? new Set(legalCells(player, game().hand[state.selected], rules))
       : null;
 
-  const diag = diagComplete(player, rules);
+  const diag = scoredDiagonals(player, rules);
 
   for (let r = 0; r < rules.rows; r++) {
     for (let c = 0; c < rules.cols; c++) {

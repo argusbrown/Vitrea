@@ -67,6 +67,7 @@ class Game {
       score: 0,
       spectrums: 0,
       busts: 0,
+      diagScored: 0,
       finished: false,
     }));
     this.phase = 'playing'; // 'playing' | 'finished'
@@ -218,14 +219,20 @@ class Game {
       p.score += COL_BONUS;
       this.emit('score', { seat: p.seat, points: COL_BONUS, reason: 'column' });
     }
-    // Diagonals only make sense on a square window. The centre cell lies on
-    // both, so a single placement can complete two.
+    // Diagonals only make sense on a square window. The two diagonals meet at
+    // the centre cell; a solid tile there can only belong to one of them, but a
+    // prism (wild) refracts both ways and counts for both.
     if (ROWS === COLS) {
-      if (r === c && p.window.every((row, i) => row[i] !== null)) {
-        p.score += DIAG_BONUS;
-        this.emit('score', { seat: p.seat, points: DIAG_BONUS, reason: 'diagonal' });
-      }
-      if (r + c === COLS - 1 && p.window.every((row, i) => row[COLS - 1 - i] !== null)) {
+      const hasCenter = ROWS % 2 === 1;
+      const mid = (ROWS - 1) / 2;
+      const centerWild = hasCenter && p.window[mid][mid] === PRISM;
+      const completed = [];
+      if (r === c && p.window.every((row, i) => row[i] !== null)) completed.push('main');
+      if (r + c === COLS - 1 && p.window.every((row, i) => row[COLS - 1 - i] !== null)) completed.push('anti');
+      for (let k = 0; k < completed.length; k++) {
+        // A shared solid centre lets only the first diagonal score.
+        if (hasCenter && p.diagScored >= 1 && !centerWild) break;
+        p.diagScored++;
         p.score += DIAG_BONUS;
         this.emit('score', { seat: p.seat, points: DIAG_BONUS, reason: 'diagonal' });
       }

@@ -154,6 +154,26 @@ function playRandomGame(numPlayers, seedTag) {
   assert(g.events.some((e) => e.type === 'score' && e.reason === 'diagonal'), 'diagonal event emitted');
 }
 
+// completing BOTH diagonals: a solid centre scores one, a prism centre scores two.
+function fillBothDiagonals(centerShard) {
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  const p = g.players[0];
+  p.sockets = {};
+  g.turnPhase = 'place';
+  // both diagonals share the centre (2,2); place it last
+  const arms = [[0, 0], [1, 1], [3, 3], [4, 4], [0, 4], [1, 3], [3, 1], [4, 0]];
+  const colours = ['ruby', 'amber', 'emerald', 'sapphire', 'amethyst', 'moonstone'];
+  arms.forEach(([r, c], i) => { p.window[r][c] = colours[i % colours.length]; });
+  g.events.length = 0;
+  g.hand = [centerShard];
+  g.place('a', 0, 2, 2);
+  return g.events.filter((e) => e.type === 'score' && e.reason === 'diagonal').length;
+}
+{
+  assert(fillBothDiagonals('emerald') === 1, 'solid centre scores only one diagonal');
+  assert(fillBothDiagonals(PRISM) === 2, 'prism centre scores both diagonals');
+}
+
 // prism ignores adjacency; same colors may not touch
 {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
