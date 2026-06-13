@@ -236,23 +236,27 @@ function legalCells(player, shard, rules) {
   return out;
 }
 
-// Which diagonals actually score (square boards only). Both diagonals share
-// the centre cell; a solid tile there carries only one of them, a prism both.
+// Which diagonals actually score (square boards only). A diagonal scores only
+// when it is full AND a single colour; a prism is wild and matches any colour.
+// The two diagonals are scored independently — the shared centre is just a cell.
 function scoredDiagonals(player, rules) {
   if (rules.rows !== rules.cols) return { main: false, anti: false };
   const w = player.window;
   const n = rules.rows;
-  let main = true;
-  let anti = true;
-  for (let i = 0; i < n; i++) {
-    if (w[i][i] === null) main = false;
-    if (w[i][n - 1 - i] === null) anti = false;
-  }
-  if (main && anti && n % 2 === 1) {
-    const mid = (n - 1) / 2;
-    if (w[mid][mid] !== rules.prism) return { main: true, anti: false }; // solid centre: one only
-  }
-  return { main, anti };
+  const monochrome = (cells) => {
+    let colour = null;
+    for (const cell of cells) {
+      if (cell === null) return false;
+      if (cell === rules.prism) continue;
+      if (colour === null) colour = cell;
+      else if (cell !== colour) return false;
+    }
+    return true;
+  };
+  const main = [];
+  const anti = [];
+  for (let i = 0; i < n; i++) { main.push(w[i][i]); anti.push(w[i][n - 1 - i]); }
+  return { main: monochrome(main), anti: monochrome(anti) };
 }
 
 // Completed lines and matched sockets on a window — for the end-of-game breakdown.
@@ -680,6 +684,27 @@ function renderGame() {
       : 'your window';
 }
 
+// Game-screen exit: the host ends the game for everyone, a guest just leaves.
+function openQuit() {
+  const host = amHost();
+  $('#quit-title').textContent = host ? 'End the game?' : 'Leave the game?';
+  $('#quit-msg').textContent = host
+    ? 'This stops play for everyone and shows the final standings.'
+    : 'You will return to the home screen. You can rejoin with the room code while the game is open.';
+  const confirm = $('#btn-quit-confirm');
+  confirm.textContent = host ? 'End game' : 'Leave';
+  confirm.onclick = () => {
+    $('#overlay-quit').hidden = true;
+    if (host) {
+      send({ type: 'endGame' });
+    } else {
+      send({ type: 'leave' });
+      leaveGame();
+    }
+  };
+  $('#overlay-quit').hidden = false;
+}
+
 function openPeek(gamePlayer, rules) {
   $('#peek-title').textContent =
     gamePlayer.id === state.you.id ? 'Your window' : `${gamePlayer.name}'s window`;
@@ -825,6 +850,7 @@ function setup() {
   $('#btn-start').addEventListener('click', () => send({ type: 'start' }));
   $('#btn-again').addEventListener('click', () => send({ type: 'playAgain' }));
   $('#btn-game-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
+  $('#btn-game-quit').addEventListener('click', openQuit);
   $('#btn-lobby-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
   $('#btn-leave-lobby').addEventListener('click', leaveGame);
   $('#btn-leave-end').addEventListener('click', leaveGame);

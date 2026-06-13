@@ -79,7 +79,10 @@
       <div id="players-strip" class="players-strip"></div>
       <div class="topbar-meta">
         <span id="round-label"></span>
-        <button id="btn-game-help" class="icon-btn" aria-label="rules">?</button>
+        <span class="topbar-btns">
+          <button id="btn-game-help" class="icon-btn" aria-label="rules">?</button>
+          <button id="btn-game-quit" class="icon-btn" aria-label="leave or end game">⏻</button>
+        </span>
       </div>
     </div>
 
@@ -118,6 +121,17 @@
     <p class="peek-score" id="peek-stats"></p>
     <p class="muted peek-breakdown" id="peek-breakdown"></p>
     <button class="btn" data-close>Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-quit" hidden>
+  <div class="overlay-card">
+    <h3 id="quit-title"></h3>
+    <p class="muted" id="quit-msg"></p>
+    <div class="quit-actions">
+      <button class="btn" data-close>Stay</button>
+      <button class="btn btn-danger" id="btn-quit-confirm"></button>
+    </div>
   </div>
 </div>
 

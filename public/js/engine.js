@@ -22,7 +22,7 @@ const SPECTRUM_BONUS = 7;
 const MATCH_BONUS = 3;
 const ROW_BONUS = 5;       // a row holds COLS shards
 const COL_BONUS = 6;       // a column holds ROWS shards
-const DIAG_BONUS = 8;      // a full main/anti diagonal (only on a square board)
+const DIAG_BONUS = 8;      // a full, single-colour main/anti diagonal (square board only)
 const FINISH_BONUS = 10;
 const MAX_ROUNDS = 30;
 
@@ -41,6 +41,19 @@ function freshBag() {
   }
   for (let i = 0; i < PRISM_COUNT; i++) bag.push(PRISM);
   return shuffle(bag);
+}
+
+// A line of cells is monochrome when it is full and every non-prism tile shares
+// one colour. Prisms are wild (skipped); an all-prism line counts as monochrome.
+function isMonochrome(cells) {
+  let colour = null;
+  for (const cell of cells) {
+    if (cell === null) return false;
+    if (cell === PRISM) continue;
+    if (colour === null) colour = cell;
+    else if (cell !== colour) return false;
+  }
+  return true;
 }
 
 // One bonus socket per row, in a random column, each requiring a distinct color.
@@ -219,19 +232,18 @@ class Game {
       p.score += COL_BONUS;
       this.emit('score', { seat: p.seat, points: COL_BONUS, reason: 'column' });
     }
-    // Diagonals only make sense on a square window. The two diagonals meet at
-    // the centre cell; a solid tile there can only belong to one of them, but a
-    // prism (wild) refracts both ways and counts for both.
+    // Diagonals only make sense on a square window. A diagonal scores only when
+    // it is full AND every tile is the same colour; a prism is wild and matches
+    // any colour. The two diagonals are scored independently — the shared centre
+    // is just another cell. A diagonal becomes full exactly once (when its last
+    // empty cell is filled), so checking on that placement scores it at most once.
     if (ROWS === COLS) {
-      const hasCenter = ROWS % 2 === 1;
-      const mid = (ROWS - 1) / 2;
-      const centerWild = hasCenter && p.window[mid][mid] === PRISM;
-      const completed = [];
-      if (r === c && p.window.every((row, i) => row[i] !== null)) completed.push('main');
-      if (r + c === COLS - 1 && p.window.every((row, i) => row[COLS - 1 - i] !== null)) completed.push('anti');
-      for (let k = 0; k < completed.length; k++) {
-        // A shared solid centre lets only the first diagonal score.
-        if (hasCenter && p.diagScored >= 1 && !centerWild) break;
+      if (r === c && isMonochrome(p.window.map((row, i) => row[i]))) {
+        p.diagScored++;
+        p.score += DIAG_BONUS;
+        this.emit('score', { seat: p.seat, points: DIAG_BONUS, reason: 'diagonal' });
+      }
+      if (r + c === COLS - 1 && isMonochrome(p.window.map((row, i) => row[COLS - 1 - i]))) {
         p.diagScored++;
         p.score += DIAG_BONUS;
         this.emit('score', { seat: p.seat, points: DIAG_BONUS, reason: 'diagonal' });
