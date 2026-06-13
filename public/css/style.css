@@ -65,6 +65,7 @@ body::before {
   padding: max(18px, env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
   max-width: 480px;
   margin: 0 auto;
+  overflow-y: auto; /* tall content (big lobbies, full standings) must scroll, not clip */
 }
 
 [hidden] { display: none !important; }
@@ -121,7 +122,7 @@ h1, h2, h3, .btn, .room-code { font-family: var(--serif); }
 /* ============================================================
    HOME
    ============================================================ */
-#screen-home { justify-content: center; gap: 6px; text-align: center; }
+#screen-home { justify-content: safe center; gap: 6px; text-align: center; }
 
 .rosette {
   position: relative;
@@ -278,7 +279,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 /* ============================================================
    LOBBY
    ============================================================ */
-#screen-lobby { justify-content: center; gap: 14px; text-align: center; }
+#screen-lobby { justify-content: safe center; gap: 14px; text-align: center; }
 
 .lobby-kicker {
   font-family: var(--serif);
@@ -648,7 +649,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 /* ============================================================
    END
    ============================================================ */
-#screen-end { justify-content: center; gap: 16px; text-align: center; }
+#screen-end { justify-content: safe center; gap: 12px; text-align: center; }
 
 .end-title {
   font-size: 2rem;
@@ -656,6 +657,9 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   color: var(--gold-hi);
   text-shadow: 0 0 26px rgba(201, 164, 92, 0.45);
 }
+
+/* keep the trophy window compact so every score fits without scrolling */
+#winner-window .window-mini { --cell: 34px; }
 
 .standings {
   list-style: none;
