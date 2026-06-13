@@ -44,6 +44,10 @@ public/
     vendor/             peerjs.min.js, qrcode.js (both MIT, vendored — no CDN).
 server/index.js         OPTIONAL zero-dependency static dev server (npm start).
                         NOT used in production; Pages serves public/ directly.
+worker/                 Cloudflare Worker that mints short-lived TURN credentials
+                        (index.js + wrangler.toml + README). Keeps the relay key
+                        out of this public page; net.js fetches creds via
+                        TURN_WORKER_URL, falling back to static relays if unset.
 test/
   game.test.js          monte-carlo + unit tests for the engine (npm test).
   browser.e2e.js        full P2P game in 2 headless browsers w/ local PeerJS.
@@ -90,8 +94,10 @@ run the same build (Pages caches assets up to ~10 min).
 
 - **TURN relays:** the free public relays in `ICE_CONFIG` are unreliable/dead, so
   play fails on Wi-Fi with client isolation. Workarounds: phone hotspot, or
-  cellular data. Permanent fix tracked in `todo.md` (#1: metered.ca or a Cloudflare
-  Worker). The "Connection check" button diagnoses which leg fails.
+  cellular data. **Permanent fix is built but not yet live:** the `worker/`
+  Cloudflare relay broker just needs deploying + `TURN_WORKER_URL` set in
+  `net.js` (see `todo.md` #1 / `worker/README.md`). The "Connection check" button
+  diagnoses which leg fails.
 - Some restrictive cellular carriers (CGNAT) also block direct links → same fix.
 
 ## Git

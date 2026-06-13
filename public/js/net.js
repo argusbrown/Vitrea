@@ -55,8 +55,45 @@ const VitreaNet = (() => {
     ],
   };
 
-  function peerOptions() {
-    const base = { config: ICE_CONFIG };
+  // A Cloudflare Worker mints short-lived TURN credentials so the relay key
+  // never ships in this public page. Set this to your deployed Worker URL (see
+  // worker/README.md). Leave '' to skip it and use the static relays only.
+  const TURN_WORKER_URL = '';
+
+  // Fetched creds are cached until shortly before they expire; on any failure
+  // we fall back to ICE_CONFIG so play still works without the relay.
+  let _turnCache = null; // { servers: [...], expires: ms-epoch }
+
+  async function fetchTurnServers() {
+    if (!TURN_WORKER_URL) return null;
+    if (_turnCache && _turnCache.expires > Date.now() + 60000) return _turnCache.servers;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(TURN_WORKER_URL, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) return _turnCache ? _turnCache.servers : null;
+      const data = await res.json();
+      const raw = data && data.iceServers;
+      const servers = Array.isArray(raw) ? raw : raw ? [raw] : [];
+      if (!servers.length) return _turnCache ? _turnCache.servers : null;
+      _turnCache = { servers, expires: Date.now() + (Number(data.ttl) || 86400) * 1000 };
+      return servers;
+    } catch {
+      return _turnCache ? _turnCache.servers : null;
+    }
+  }
+
+  // Resolve the full ICE config: Cloudflare relay first (preferred), then the
+  // static STUN + free-relay fallbacks. Never rejects — worst case is ICE_CONFIG.
+  async function resolveIce() {
+    const turn = await fetchTurnServers();
+    if (!turn || !turn.length) return ICE_CONFIG;
+    return { iceServers: [...turn, ...ICE_CONFIG.iceServers] };
+  }
+
+  function peerOptions(ice) {
+    const base = { config: ice || ICE_CONFIG };
     const ps = new URLSearchParams(location.search).get('ps');
     if (!ps) return base;
     const [host, port] = ps.split(':');
@@ -242,8 +279,8 @@ const VitreaNet = (() => {
         reject(new Error('Could not reach the matchmaking service — check your internet connection and try again.'));
       }, 20000);
 
-      function announce() {
-        const peer = new Peer(PEER_PREFIX + room.code, peerOptions());
+      function announce(ice) {
+        const peer = new Peer(PEER_PREFIX + room.code, peerOptions(ice));
 
         peer.on('open', () => {
           // deliver to our own UI asynchronously, like a real socket would
@@ -280,7 +317,7 @@ const VitreaNet = (() => {
           if (err.type === 'unavailable-id' && !resume && !settled && attempts++ < 5) {
             room.code = newCode(); // collision on the public broker — reroll
             peer.destroy();
-            announce();
+            announce(ice);
             return;
           }
           if (!settled) {
@@ -293,7 +330,7 @@ const VitreaNet = (() => {
         });
       }
 
-      announce();
+      resolveIce().then((ice) => { if (!settled) announce(ice); });
     });
   }
 
@@ -303,7 +340,7 @@ const VitreaNet = (() => {
   function join({ code, name, token, onMessage, onStatus }) {
     code = String(code || '').toUpperCase().trim();
     return new Promise((resolve, reject) => {
-      const peer = new Peer(peerOptions());
+      let peer = null;
       let conn = null;
       let myToken = token || null;
       let everConnected = false;
@@ -316,7 +353,7 @@ const VitreaNet = (() => {
         if (everConnected || stopped) return;
         stopped = true;
         clearTimeout(killer);
-        try { peer.destroy(); } catch { /* already gone */ }
+        try { if (peer) peer.destroy(); } catch { /* already gone */ }
         reject(new Error(message));
       }
 
@@ -331,7 +368,7 @@ const VitreaNet = (() => {
       const transport = {
         code,
         send: (msg) => { if (conn && conn.open) conn.send(msg); },
-        close: () => { stopped = true; clearTimeout(killer); peer.destroy(); },
+        close: () => { stopped = true; clearTimeout(killer); try { if (peer) peer.destroy(); } catch { /* already gone */ } },
       };
 
       function connect() {
@@ -377,18 +414,22 @@ const VitreaNet = (() => {
         retryMs = Math.min(retryMs * 1.6, 8000);
       }
 
-      peer.on('open', connect);
-      peer.on('disconnected', () => { try { peer.reconnect(); } catch { /* destroyed */ } });
-      peer.on('error', (err) => {
-        if (err.type === 'peer-unavailable') {
-          if (!everConnected) {
-            fail("No game found with that code — is the host's lobby still open?");
-          } else {
-            scheduleRetry(); // host page may be reloading — keep looking for it
+      resolveIce().then((ice) => {
+        if (stopped) return;
+        peer = new Peer(peerOptions(ice));
+        peer.on('open', connect);
+        peer.on('disconnected', () => { try { peer.reconnect(); } catch { /* destroyed */ } });
+        peer.on('error', (err) => {
+          if (err.type === 'peer-unavailable') {
+            if (!everConnected) {
+              fail("No game found with that code — is the host's lobby still open?");
+            } else {
+              scheduleRetry(); // host page may be reloading — keep looking for it
+            }
+            return;
           }
-          return;
-        }
-        if (!everConnected) fail(friendlyPeerError(err));
+          if (!everConnected) fail(friendlyPeerError(err));
+        });
       });
     });
   }
@@ -417,5 +458,5 @@ const VitreaNet = (() => {
     localStorage.removeItem(HOST_ROOM_KEY);
   }
 
-  return { host, join, savedHostRoom, clearHostRoom, joinUrlFor, peerOptions, iceConfig: ICE_CONFIG };
+  return { host, join, savedHostRoom, clearHostRoom, joinUrlFor, peerOptions, iceConfig: ICE_CONFIG, resolveIce };
 })();

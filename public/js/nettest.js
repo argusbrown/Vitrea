@@ -68,7 +68,14 @@ const VitreaNetTest = (() => {
   // report(rowId, status) with status 'testing' | 'ok' | 'bad'.
   // Resolves with a human verdict string.
   async function run(report) {
-    const groups = VitreaNet.iceConfig.iceServers;
+    // Resolve the live ICE list (includes the Cloudflare relay if a Worker is
+    // configured); fall back to the static list if that fetch fails.
+    let groups;
+    try {
+      groups = (await VitreaNet.resolveIce()).iceServers;
+    } catch {
+      groups = VitreaNet.iceConfig.iceServers;
+    }
     const stunGroup = groups.find((g) => String(g.urls).includes('stun:'));
     const turnGroups = groups.filter((g) => String(g.urls).includes('turn'));
 
