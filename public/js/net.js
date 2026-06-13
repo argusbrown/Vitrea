@@ -7,7 +7,7 @@
    over WebRTC data channels (PeerJS); the PeerJS signaling server
    is only used to introduce phones to each other. The wire
    protocol is identical for host (loopback) and guests:
-     client -> room : {type: join|rejoin|start|draw|stop|place|discard|skipTurn|playAgain}
+     client -> room : {type: join|rejoin|start|draw|stop|place|discard|skipTurn|endGame|leave|playAgain}
      room -> client : {type: joined|state|error}
    ============================================================ */
 
@@ -211,6 +211,19 @@ const VitreaNet = (() => {
           this.game.forceEndTurn();
           if (this.game.phase === 'finished') this.phase = 'finished';
           this.broadcast();
+          break;
+        }
+        case 'endGame': {
+          // host ends the game in progress; final standings are tallied now
+          if (this.phase !== 'playing' || playerId !== this.hostId || !this.game) return;
+          this.game.endGame();
+          this.phase = 'finished';
+          this.broadcast();
+          break;
+        }
+        case 'leave': {
+          // a player bows out; drop their slot (or mark them away mid-game)
+          this.detach(playerId, this.clients.get(playerId));
           break;
         }
         case 'playAgain': {

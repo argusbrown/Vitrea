@@ -434,6 +434,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   color: var(--ink-dim);
   padding: 0 2px;
 }
+.topbar-btns { display: flex; gap: 8px; align-items: center; }
 
 /* ---------------- the kiln ---------------- */
 .kiln {
@@ -760,6 +761,8 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   color: var(--gold-hi);
   letter-spacing: 0.05em;
 }
+
+.quit-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
 .rules { text-align: left; display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; line-height: 1.45; }
 .rules strong, .rules b { color: var(--gold-hi); }
