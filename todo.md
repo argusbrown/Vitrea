@@ -46,11 +46,17 @@ if we want the bigger/faster network and don't mind deploying one Worker.
 
 ## 2. Possible balance tuning (after real playtests)
 All knobs are constants at the top of `public/js/engine.js`:
-- Game length feels long? Lower `MAX_ROUNDS` (30) or `COPIES_PER_COLOR` (16).
-- Prisms too common/rare? `PRISM_COUNT` (8).
-- Scoring weights: `SPECTRUM_BONUS` 7, `MATCH_BONUS` 3, `ROW_BONUS` 4,
-  `COL_BONUS` 6, `FINISH_BONUS` 10.
-- Board size: `ROWS` 5 × `COLS` 4.
+- Board size: `ROWS` 5 × `COLS` 5 (square enables the two diagonals).
+- Game length feels long? Lower `MAX_ROUNDS` (30) or `COPIES_PER_COLOR` (18).
+- Prisms double as shields now — too common/rare? `PRISM_COUNT` (12).
+- Scoring weights: `SPECTRUM_BONUS` 7, `MATCH_BONUS` 3, `ROW_BONUS` 5,
+  `COL_BONUS` 6, `DIAG_BONUS` 8, `FINISH_BONUS` 10.
+- Diagonals aren't constrained by the no-adjacent-colour rule (diagonal cells
+  don't touch orthogonally), so they're a touch easier than rows/cols — tune
+  `DIAG_BONUS` down if they feel too cheap.
+- Perfect Spectrum now = holding all six colours at once (`SPECTRUM_SIZE` =
+  number of colours). The prism shield is what makes surviving to all six
+  feasible; if it feels too easy, lower `PRISM_COUNT`.
 
 ## 3. Nice-to-haves (unprioritised)
 - Per-player turn timer / auto-skip for AFK players (host can already manually

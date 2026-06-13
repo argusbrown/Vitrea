@@ -236,11 +236,21 @@ function legalCells(player, shard, rules) {
   return out;
 }
 
+// Chance the next draw clashes with a colour already in hand. Prisms never
+// clash, so they don't add danger.
 function crackRisk(g) {
   if (g.hand.length === 0 || g.bagCount === 0) return 0;
+  const prism = g.rules.prism;
   let danger = 0;
-  for (const shard of new Set(g.hand)) danger += g.bagCounts[shard] || 0;
+  for (const shard of new Set(g.hand)) {
+    if (shard === prism) continue;
+    danger += g.bagCounts[shard] || 0;
+  }
   return Math.round((danger / g.bagCount) * 100);
+}
+
+function hasShield(g) {
+  return g.hand.includes(g.rules.prism);
 }
 
 function vibrate(pattern) {
@@ -265,9 +275,18 @@ function processEvents(events) {
         vibrate([30, 30, 30, 30, 90]);
         if (!mine) toast(`${ev.name} drew a Perfect Spectrum!`);
         break;
+      case 'shield':
+        if (mine) {
+          banner('Prism shield!', 'b-spectrum');
+          vibrate([20, 30, 60]);
+        } else {
+          toast(`${ev.name} spent a prism to survive a clash`);
+        }
+        break;
       case 'score': {
         const what = ev.reason === 'socket' ? 'socket matched'
           : ev.reason === 'row' ? 'row complete'
+          : ev.reason === 'diagonal' ? 'diagonal complete'
           : 'column complete';
         toast(`+${ev.points} ${what} — ${g.players[ev.seat].name}`);
         break;
@@ -548,7 +567,9 @@ function renderGame() {
   }
 
   const risk = crackRisk(g);
-  const riskText = `crack risk ~<b class="${risk >= 40 ? 'risk-hot' : ''}">${risk}%</b>`;
+  const riskText = hasShield(g)
+    ? `<b class="shielded">prism shield ready</b> · clash risk ~${risk}%`
+    : `crack risk ~<b class="${risk >= 40 ? 'risk-hot' : ''}">${risk}%</b>`;
 
   if (g.turnPhase === 'draw') {
     if (myTurn) {
