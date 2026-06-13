@@ -276,6 +276,14 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 .nt-status.bad { color: var(--ruby-hi); }
 .nettest-verdict { font-size: 0.88rem; line-height: 1.45; color: var(--ink); }
 
+.peek-score {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+.peek-breakdown { font-size: 0.8rem; line-height: 1.5; }
+
 /* ============================================================
    LOBBY
    ============================================================ */
@@ -611,6 +619,15 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 .cell.filled.c-prism {
   background: conic-gradient(from 25deg,
     var(--ruby), var(--amber), var(--emerald), var(--sapphire), var(--amethyst), var(--moonstone), var(--ruby));
+}
+/* a cell on a completed diagonal — glows so the scoring is visible */
+.cell.filled.diag-line {
+  box-shadow:
+    inset 0 0 14px rgba(255, 255, 255, 0.28),
+    0 0 12px var(--glowc),
+    0 0 0 2px var(--gold-hi),
+    0 0 12px 2px rgba(236, 212, 154, 0.65);
+  z-index: 1;
 }
 .cell.filled.socket-matched {
   box-shadow:
