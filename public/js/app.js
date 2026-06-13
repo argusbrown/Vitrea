@@ -236,8 +236,42 @@ function legalCells(player, shard, rules) {
   return out;
 }
 
-// Chance the next draw clashes with a colour already in hand. Prisms never
-// clash, so they don't add danger.
+// Which of the two diagonals are fully filled (square boards only).
+function diagComplete(player, rules) {
+  if (rules.rows !== rules.cols) return { main: false, anti: false };
+  const w = player.window;
+  const n = rules.rows;
+  let main = true;
+  let anti = true;
+  for (let i = 0; i < n; i++) {
+    if (w[i][i] === null) main = false;
+    if (w[i][n - 1 - i] === null) anti = false;
+  }
+  return { main, anti };
+}
+
+// Completed lines and matched sockets on a window — for the end-of-game breakdown.
+function lineBreakdown(player, rules) {
+  const w = player.window;
+  let rows = 0;
+  let cols = 0;
+  let sockets = 0;
+  for (let r = 0; r < rules.rows; r++) if (w[r].every((x) => x !== null)) rows++;
+  for (let c = 0; c < rules.cols; c++) {
+    let full = true;
+    for (let r = 0; r < rules.rows; r++) if (w[r][c] === null) { full = false; break; }
+    if (full) cols++;
+  }
+  for (const key in player.sockets) {
+    const [r, c] = key.split(',').map(Number);
+    const s = w[r][c];
+    if (s && (s === rules.prism || s === player.sockets[key])) sockets++;
+  }
+  const d = diagComplete(player, rules);
+  return { rows, cols, diags: (d.main ? 1 : 0) + (d.anti ? 1 : 0), sockets };
+}
+
+
 function crackRisk(g) {
   if (g.hand.length === 0 || g.bagCount === 0) return 0;
   const prism = g.rules.prism;
@@ -461,6 +495,8 @@ function windowEl(player, rules, { mini = false, interactive = false } = {}) {
       ? new Set(legalCells(player, game().hand[state.selected], rules))
       : null;
 
+  const diag = diagComplete(player, rules);
+
   for (let r = 0; r < rules.rows; r++) {
     for (let c = 0; c < rules.cols; c++) {
       const cell = document.createElement('div');
@@ -475,6 +511,9 @@ function windowEl(player, rules, { mini = false, interactive = false } = {}) {
         cell.classList.add('filled', `c-${shard}`);
         if (socket && (shard === rules.prism || shard === socket)) {
           cell.classList.add('socket-matched');
+        }
+        if ((diag.main && r === c) || (diag.anti && r + c === rules.cols - 1)) {
+          cell.classList.add('diag-line');
         }
       }
       if (legal && legal.has(`${r},${c}`)) {
@@ -642,8 +681,18 @@ function openPeek(gamePlayer, rules) {
   const mount = $('#peek-window');
   mount.innerHTML = '';
   mount.appendChild(windowEl(gamePlayer, rules, { mini: true }));
-  $('#peek-stats').textContent =
-    `${gamePlayer.score} points · ${gamePlayer.spectrums} spectrum${gamePlayer.spectrums === 1 ? '' : 's'} · ${gamePlayer.busts} crack${gamePlayer.busts === 1 ? '' : 's'}`;
+  $('#peek-stats').textContent = `${gamePlayer.score} points`;
+
+  const b = lineBreakdown(gamePlayer, rules);
+  const parts = [
+    `${b.rows} row${b.rows === 1 ? '' : 's'}`,
+    `${b.cols} column${b.cols === 1 ? '' : 's'}`,
+    `${b.diags} diagonal${b.diags === 1 ? '' : 's'}`,
+    `${b.sockets} socket${b.sockets === 1 ? '' : 's'}`,
+    `${gamePlayer.spectrums} spectrum${gamePlayer.spectrums === 1 ? '' : 's'}`,
+    `${gamePlayer.busts} crack${gamePlayer.busts === 1 ? '' : 's'}`,
+  ];
+  $('#peek-breakdown').textContent = parts.join(' · ');
   $('#overlay-peek').hidden = false;
 }
 
