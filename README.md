@@ -75,7 +75,7 @@ revealed to all players.
 | socket filled with its matching colour | **+3** |
 | completed row | **+5** |
 | completed column | **+6** |
-| completed diagonal | **+8** |
+| completed single-colour diagonal (prism is wild) | **+8** |
 | Perfect Spectrum | **+7** |
 | first to finish their window | **+10** |
 

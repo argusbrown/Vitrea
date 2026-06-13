@@ -137,25 +137,58 @@ function playRandomGame(numPlayers, seedTag) {
   assert(g.players[0].busts === 1 && g.hand.length === 0, 'no shield -> crack');
 }
 
-// diagonal bonus on a square window
+// a full, single-colour diagonal scores; the last placement awards the bonus
 {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
   const p = g.players[0];
   p.sockets = {};
   g.turnPhase = 'place';
-  // fill the main diagonal; the last placement should award the diagonal bonus
-  const diag = [[0, 0, 'ruby'], [1, 1, 'amber'], [2, 2, 'emerald'], [3, 3, 'sapphire'], [4, 4, 'amethyst']];
-  for (let i = 0; i < diag.length - 1; i++) p.window[diag[i][0]][diag[i][1]] = diag[i][2];
+  for (let i = 0; i < 4; i++) p.window[i][i] = 'ruby';
   const diagBonus = g.snapshot().rules.diagBonus;
   const before = p.score;
-  g.hand = ['amethyst'];
+  g.hand = ['ruby'];
   g.place('a', 0, 4, 4);
-  assert(p.score - before >= 1 + diagBonus, `diagonal bonus scored (got +${p.score - before})`);
+  assert(p.score - before >= 1 + diagBonus, `single-colour diagonal scores (got +${p.score - before})`);
   assert(g.events.some((e) => e.type === 'score' && e.reason === 'diagonal'), 'diagonal event emitted');
 }
 
-// completing BOTH diagonals: a solid centre scores one, a prism centre scores two.
-function fillBothDiagonals(centerShard) {
+// a full but MIXED-colour diagonal scores no bonus (the reported bug)
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  const p = g.players[0];
+  p.sockets = {};
+  g.turnPhase = 'place';
+  p.window[0][0] = 'ruby';
+  p.window[1][1] = 'emerald';
+  p.window[2][2] = 'ruby';
+  p.window[3][3] = 'ruby';
+  g.events.length = 0;
+  const before = p.score;
+  g.hand = ['ruby'];
+  g.place('a', 0, 4, 4);
+  assert(p.score - before === 1, `mixed-colour diagonal scores no bonus (got +${p.score - before})`);
+  assert(!g.events.some((e) => e.type === 'score' && e.reason === 'diagonal'), 'no diagonal event for mixed colours');
+}
+
+// a prism on the diagonal is wild and keeps it monochrome
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  const p = g.players[0];
+  p.sockets = {};
+  g.turnPhase = 'place';
+  p.window[0][0] = 'ruby';
+  p.window[1][1] = PRISM;
+  p.window[2][2] = 'ruby';
+  p.window[3][3] = 'ruby';
+  const diagBonus = g.snapshot().rules.diagBonus;
+  const before = p.score;
+  g.hand = ['ruby'];
+  g.place('a', 0, 4, 4);
+  assert(p.score - before >= 1 + diagBonus, `prism keeps diagonal monochrome (got +${p.score - before})`);
+}
+
+// both diagonals score independently — the shared centre is just a cell.
+function diagEventsForBoth(centerShard, sameColour) {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
   const p = g.players[0];
   p.sockets = {};
@@ -163,15 +196,16 @@ function fillBothDiagonals(centerShard) {
   // both diagonals share the centre (2,2); place it last
   const arms = [[0, 0], [1, 1], [3, 3], [4, 4], [0, 4], [1, 3], [3, 1], [4, 0]];
   const colours = ['ruby', 'amber', 'emerald', 'sapphire', 'amethyst', 'moonstone'];
-  arms.forEach(([r, c], i) => { p.window[r][c] = colours[i % colours.length]; });
+  arms.forEach(([r, c], i) => { p.window[r][c] = sameColour ? 'ruby' : colours[i % colours.length]; });
   g.events.length = 0;
   g.hand = [centerShard];
   g.place('a', 0, 2, 2);
   return g.events.filter((e) => e.type === 'score' && e.reason === 'diagonal').length;
 }
 {
-  assert(fillBothDiagonals('emerald') === 1, 'solid centre scores only one diagonal');
-  assert(fillBothDiagonals(PRISM) === 2, 'prism centre scores both diagonals');
+  assert(diagEventsForBoth('ruby', true) === 2, 'two single-colour diagonals both score even with a solid shared centre');
+  assert(diagEventsForBoth(PRISM, true) === 2, 'prism centre keeps both single-colour diagonals scoring');
+  assert(diagEventsForBoth('ruby', false) === 0, 'mixed-colour diagonals do not score');
 }
 
 // prism ignores adjacency; same colors may not touch

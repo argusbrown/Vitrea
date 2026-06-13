@@ -21,7 +21,7 @@ is used only to introduce peers; after that, traffic is phone-to-phone. All game
 state is public, so the host broadcasts one full snapshot to every client.
 
 Wire protocol (identical for the host's own UI via loopback and for guests):
-- client → room: `{type: join|rejoin|start|draw|stop|place|discard|skipTurn|playAgain}`
+- client → room: `{type: join|rejoin|start|draw|stop|place|discard|skipTurn|endGame|leave|playAgain}`
 - room → client: `{type: joined|state|error}`
 
 ## Files
@@ -96,6 +96,13 @@ run the same build (Pages caches assets up to ~10 min).
 
 ## Git
 
-- Develop on a feature branch, merge to `main` (which deploys). This work was done
-  on `claude/multiplayer-browser-game-qr-gvym11`.
+- **Every new feature or change happens in a git worktree** — never commit
+  feature work directly on `main`. Create one per branch before you start.
+- **Worktrees live locally at `.claude/worktrees/<branch>`.** Create with:
+  ```bash
+  git worktree add .claude/worktrees/<branch> -b <branch>
+  ```
+  Remove when merged: `git worktree remove .claude/worktrees/<branch>`.
+- `.claude/` is gitignored, so worktrees never get committed into the tree.
+- Develop on the feature branch, then merge to `main` (which deploys).
 - Do not commit `node_modules/` or `shots/` (gitignored).
