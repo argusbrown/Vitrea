@@ -678,6 +678,16 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   border-radius: 12px;
   padding: 11px 16px;
   animation: rise-in 0.4s ease both;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.08s;
+}
+.standings li:active { transform: scale(0.98); }
+.standings li::after {
+  content: '›';
+  font-size: 1.3rem;
+  color: var(--ink-dim);
+  margin-left: 4px;
+  line-height: 1;
 }
 .standings li:nth-child(2) { animation-delay: 0.08s; }
 .standings li:nth-child(3) { animation-delay: 0.16s; }
@@ -688,6 +698,13 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 .standings .s-name { font-size: 1.05rem; }
 .standings .s-pts { margin-left: auto; font-family: var(--serif); font-size: 1.3rem; font-weight: 700; color: var(--gold-hi); }
 .standings li.first { border-color: var(--gold); box-shadow: 0 0 18px rgba(201, 164, 92, 0.3); }
+
+.tap-hint {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
 
 /* ============================================================
    OVERLAYS / BANNER / TOASTS

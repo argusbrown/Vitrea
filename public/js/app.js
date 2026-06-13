@@ -647,8 +647,10 @@ function renderEnd() {
     const p = g.players[seat];
     const li = document.createElement('li');
     if (i === 0) li.classList.add('first');
+    li.setAttribute('role', 'button');
     li.innerHTML = `<span class="rank">${i + 1}.</span><span class="s-name"></span><span class="s-pts">${p.score}</span>`;
     li.querySelector('.s-name').textContent = p.name + (state.you && p.id === state.you.id ? ' (you)' : '');
+    li.addEventListener('click', () => openPeek(p, g.rules));
     list.appendChild(li);
   });
 
