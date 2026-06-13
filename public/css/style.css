@@ -521,6 +521,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
   min-height: 1.1em;
 }
 .kiln-hint .risk-hot { color: var(--ruby-hi); font-weight: 600; }
+.kiln-hint .shielded { color: var(--sapphire-hi); font-weight: 600; }
 
 .kiln-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .kiln-actions .btn { font-size: 1.05rem; padding: 11px 20px; }
@@ -537,9 +538,9 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 }
 
 .window-arch {
-  --cell: clamp(42px, 12.5vw, 60px);
-  padding: 12px;
-  padding-top: 20px;
+  --cell: clamp(34px, 10.2vw, 52px);
+  padding: 10px;
+  padding-top: 18px;
   background:
     linear-gradient(180deg, rgba(236, 212, 154, 0.16), rgba(138, 109, 59, 0.12)),
     var(--lead-deep);
@@ -551,8 +552,8 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 
 .window-grid {
   display: grid;
-  grid-template-columns: repeat(4, var(--cell));
-  gap: 7px;
+  grid-template-columns: repeat(5, var(--cell));
+  gap: 6px;
   background: transparent;
 }
 
@@ -643,7 +644,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 
 /* mini window (peek / standings) */
 .window-mini .window-grid { gap: 4px; }
-.window-mini { --cell: 40px; padding: 8px; padding-top: 13px; border-width: 2px; }
+.window-mini { --cell: 34px; padding: 8px; padding-top: 13px; border-width: 2px; }
 .window-mini .cell { border-radius: 5px; }
 
 /* ============================================================
@@ -659,7 +660,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 }
 
 /* keep the trophy window compact so every score fits without scrolling */
-#winner-window .window-mini { --cell: 34px; }
+#winner-window .window-mini { --cell: 30px; }
 
 .standings {
   list-style: none;

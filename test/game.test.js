@@ -5,7 +5,8 @@
 
 const { Game, COLORS, PRISM, ROWS, COLS } = require('../public/js/engine');
 
-const TOTAL_SHARDS = COLORS.length * 16 + 8;
+// Derive the bag size from the engine so tuning constants can't desync the test.
+const TOTAL_SHARDS = new Game([{ id: 'x', name: 'X' }, { id: 'y', name: 'Y' }]).bag.length;
 
 function assert(cond, msg) {
   if (!cond) throw new Error('ASSERT FAILED: ' + msg);
@@ -33,8 +34,9 @@ function checkInvariants(g, label) {
       }
     }
   }
-  // no duplicate colors in a live hand
-  assert(new Set(g.hand).size === g.hand.length, `${label}: hand has duplicates`);
+  // a live hand may hold several prisms, but never a duplicate colour
+  const colors = g.hand.filter((s) => s !== PRISM);
+  assert(new Set(colors).size === colors.length, `${label}: hand has duplicate colours`);
 }
 
 function playRandomGame(numPlayers, seedTag) {
@@ -94,13 +96,62 @@ function playRandomGame(numPlayers, seedTag) {
   assert(g.events.some((e) => e.type === 'bust'), 'bust event emitted');
 }
 
-// spectrum: six unique draws scores and moves to placement
+// spectrum: holding all six colours scores and moves to placement
 {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
   g.bag.push(...COLORS.slice().reverse()); // next six pops are six unique colors
   for (let i = 0; i < 6; i++) g.draw('a');
   assert(g.players[0].score === 7, 'spectrum bonus scored');
+  assert(g.players[0].spectrums === 1, 'spectrum counted');
   assert(g.turnPhase === 'place', 'spectrum forces placement');
+}
+
+// prism shield: a clash is absorbed by spending a prism instead of busting
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.hand = ['ruby', PRISM];
+  g.bag.push('ruby'); // next pop clashes with the ruby in hand
+  g.draw('a');
+  assert(g.players[0].busts === 0, 'shield prevents a bust');
+  assert(g.hand.length === 1 && g.hand[0] === 'ruby', 'prism and clash discarded, ruby kept');
+  assert(g.turnSeat === 0 && g.turnPhase === 'draw', 'turn continues after a shield');
+  assert(g.events.some((e) => e.type === 'shield'), 'shield event emitted');
+}
+
+// prisms never clash with each other; you may hold several
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.hand = [PRISM];
+  g.bag.push(PRISM);
+  g.draw('a');
+  assert(g.players[0].busts === 0, 'second prism does not crack');
+  assert(g.hand.filter((s) => s === PRISM).length === 2, 'two prisms held');
+}
+
+// drawing a clash with no prism still cracks
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.hand = ['ruby'];
+  g.bag.push('ruby');
+  g.draw('a');
+  assert(g.players[0].busts === 1 && g.hand.length === 0, 'no shield -> crack');
+}
+
+// diagonal bonus on a square window
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  const p = g.players[0];
+  p.sockets = {};
+  g.turnPhase = 'place';
+  // fill the main diagonal; the last placement should award the diagonal bonus
+  const diag = [[0, 0, 'ruby'], [1, 1, 'amber'], [2, 2, 'emerald'], [3, 3, 'sapphire'], [4, 4, 'amethyst']];
+  for (let i = 0; i < diag.length - 1; i++) p.window[diag[i][0]][diag[i][1]] = diag[i][2];
+  const diagBonus = g.snapshot().rules.diagBonus;
+  const before = p.score;
+  g.hand = ['amethyst'];
+  g.place('a', 0, 4, 4);
+  assert(p.score - before >= 1 + diagBonus, `diagonal bonus scored (got +${p.score - before})`);
+  assert(g.events.some((e) => e.type === 'score' && e.reason === 'diagonal'), 'diagonal event emitted');
 }
 
 // prism ignores adjacency; same colors may not touch

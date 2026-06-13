@@ -13,15 +13,16 @@ const COLORS = ['ruby', 'amber', 'emerald', 'sapphire', 'amethyst', 'moonstone']
 const PRISM = 'prism';
 
 const ROWS = 5;
-const COLS = 4;
-const COPIES_PER_COLOR = 16;
-const PRISM_COUNT = 8;
+const COLS = 5;
+const COPIES_PER_COLOR = 18;
+const PRISM_COUNT = 12;
 
-const SPECTRUM_SIZE = 6;
+const SPECTRUM_SIZE = 6;   // a Perfect Spectrum = holding all six colours at once
 const SPECTRUM_BONUS = 7;
 const MATCH_BONUS = 3;
-const ROW_BONUS = 4; // a row holds COLS shards
-const COL_BONUS = 6; // a column holds ROWS shards
+const ROW_BONUS = 5;       // a row holds COLS shards
+const COL_BONUS = 6;       // a column holds ROWS shards
+const DIAG_BONUS = 8;      // a full main/anti diagonal (only on a square board)
 const FINISH_BONUS = 10;
 const MAX_ROUNDS = 30;
 
@@ -117,6 +118,11 @@ class Game {
     return counts;
   }
 
+  // Distinct colours currently in hand (prisms are wild, not a colour).
+  handColors(hand = this.hand) {
+    return new Set(hand.filter((s) => s !== PRISM));
+  }
+
   draw(playerId) {
     const p = this.assertTurn(playerId, 'draw');
     const shard = this.drawShard();
@@ -126,7 +132,20 @@ class Game {
       else this.advanceTurn();
       return;
     }
-    if (this.hand.includes(shard)) {
+
+    // A clash = drawing a colour you already hold. Prisms never clash.
+    const clash = shard !== PRISM && this.hand.includes(shard);
+    if (clash) {
+      const prismIdx = this.hand.indexOf(PRISM);
+      if (prismIdx !== -1) {
+        // Prism shield: sacrifice a prism to absorb the clash and keep going.
+        this.hand.splice(prismIdx, 1);
+        this.discardPile.push(PRISM, shard);
+        this.emit('reveal', { seat: p.seat, shard, crack: false });
+        this.emit('shield', { seat: p.seat, name: p.name, shard });
+        return;
+      }
+      // No prism to spend — the glass cracks.
       this.hand.push(shard);
       this.emit('reveal', { seat: p.seat, shard, crack: true });
       this.discardPile.push(...this.hand);
@@ -136,9 +155,10 @@ class Game {
       this.advanceTurn();
       return;
     }
+
     this.hand.push(shard);
     this.emit('reveal', { seat: p.seat, shard, crack: false });
-    if (this.hand.length >= SPECTRUM_SIZE) {
+    if (this.handColors().size >= SPECTRUM_SIZE) {
       p.score += SPECTRUM_BONUS;
       p.spectrums++;
       this.emit('spectrum', { seat: p.seat, name: p.name, points: SPECTRUM_BONUS });
@@ -197,6 +217,18 @@ class Game {
     if (p.window.every((row) => row[c] !== null)) {
       p.score += COL_BONUS;
       this.emit('score', { seat: p.seat, points: COL_BONUS, reason: 'column' });
+    }
+    // Diagonals only make sense on a square window. The centre cell lies on
+    // both, so a single placement can complete two.
+    if (ROWS === COLS) {
+      if (r === c && p.window.every((row, i) => row[i] !== null)) {
+        p.score += DIAG_BONUS;
+        this.emit('score', { seat: p.seat, points: DIAG_BONUS, reason: 'diagonal' });
+      }
+      if (r + c === COLS - 1 && p.window.every((row, i) => row[COLS - 1 - i] !== null)) {
+        p.score += DIAG_BONUS;
+        this.emit('score', { seat: p.seat, points: DIAG_BONUS, reason: 'diagonal' });
+      }
     }
     this.emit('placed', { seat: p.seat, shard, r, c });
 
@@ -320,6 +352,7 @@ class Game {
         matchBonus: MATCH_BONUS,
         rowBonus: ROW_BONUS,
         colBonus: COL_BONUS,
+        diagBonus: DIAG_BONUS,
         finishBonus: FINISH_BONUS,
       },
     };
