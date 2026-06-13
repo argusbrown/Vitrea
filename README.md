@@ -73,8 +73,9 @@ revealed to all players.
 |---|---|
 | each shard set in your window | **+1** |
 | socket filled with its matching colour | **+3** |
-| completed row | **+4** |
+| completed row | **+5** |
 | completed column | **+6** |
+| completed diagonal | **+8** |
 | Perfect Spectrum | **+7** |
 | first to finish their window | **+10** |
 
