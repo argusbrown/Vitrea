@@ -24,7 +24,8 @@ function checkInvariants(g, label) {
   const inPlay = g.bag.length + g.discardPile.length + g.hand.length + shardsOnWindows(g);
   assert(inPlay === TOTAL_SHARDS, `${label}: shard conservation (${inPlay} != ${TOTAL_SHARDS})`);
   for (const p of g.players) {
-    assert(p.score >= 0, `${label}: non-negative score`);
+    // Score can dip below zero — each deliberate discard costs points.
+    assert(Number.isInteger(p.score), `${label}: integer score`);
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const s = p.window[r][c];
@@ -94,6 +95,22 @@ function playRandomGame(numPlayers, seedTag) {
   assert(g.turnSeat === 1, 'bust passes turn');
   assert(g.players[0].busts === 1, 'bust counted');
   assert(g.events.some((e) => e.type === 'bust'), 'bust event emitted');
+}
+
+// discarding a shard costs a point and is tallied
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.hand = ['ruby', 'amber'];
+  g.turnPhase = 'place';
+  g.discardShard('a', 0);
+  assert(g.players[0].score === -1, 'discard penalises score');
+  assert(g.players[0].discards === 1, 'discard counted');
+  assert(g.hand.length === 1 && g.hand[0] === 'amber', 'only the chosen shard is discarded');
+  assert(g.turnSeat === 0 && g.turnPhase === 'place', 'turn continues while shards remain');
+  assert(g.events.some((e) => e.type === 'discard'), 'discard event emitted');
+  g.discardShard('a', 0);
+  assert(g.players[0].score === -2 && g.players[0].discards === 2, 'each discard stacks');
+  assert(g.turnSeat === 1, 'turn ends when the hand empties');
 }
 
 // spectrum: holding all six colours scores and moves to placement

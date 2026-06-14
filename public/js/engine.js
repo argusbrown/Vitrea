@@ -24,6 +24,7 @@ const ROW_BONUS = 5;       // a row holds COLS shards
 const COL_BONUS = 6;       // a column holds ROWS shards
 const DIAG_BONUS = 8;      // a full, single-colour main/anti diagonal (square board only)
 const FINISH_BONUS = 10;
+const DISCARD_PENALTY = 1; // points lost per shard deliberately discarded
 const MAX_ROUNDS = 30;
 
 function shuffle(arr) {
@@ -80,6 +81,7 @@ class Game {
       score: 0,
       spectrums: 0,
       busts: 0,
+      discards: 0,
       diagScored: 0,
       finished: false,
     }));
@@ -263,9 +265,12 @@ class Game {
   }
 
   discardShard(playerId, handIndex) {
-    this.assertTurn(playerId, 'place');
+    const p = this.assertTurn(playerId, 'place');
     if (handIndex < 0 || handIndex >= this.hand.length) throw new Error('Invalid shard.');
     this.discardPile.push(this.hand.splice(handIndex, 1)[0]);
+    p.score -= DISCARD_PENALTY;
+    p.discards++;
+    this.emit('discard', { seat: p.seat, name: p.name, points: DISCARD_PENALTY });
     if (this.hand.length === 0) this.advanceTurn();
   }
 
@@ -358,6 +363,7 @@ class Game {
         score: p.score,
         spectrums: p.spectrums,
         busts: p.busts,
+        discards: p.discards,
         finished: p.finished,
       })),
       events: this.events,
@@ -373,6 +379,7 @@ class Game {
         colBonus: COL_BONUS,
         diagBonus: DIAG_BONUS,
         finishBonus: FINISH_BONUS,
+        discardPenalty: DISCARD_PENALTY,
       },
     };
   }

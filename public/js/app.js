@@ -334,6 +334,9 @@ function processEvents(events) {
         toast(`+${ev.points} ${what} — ${g.players[ev.seat].name}`);
         break;
       }
+      case 'discard':
+        toast(`${mine ? 'You' : ev.name} discarded a shard −${ev.points}`);
+        break;
       case 'finish':
         banner(`${mine ? 'You' : ev.name} finished! +${ev.points}`, 'b-gold');
         toast('Final turns — the round plays out');
@@ -642,12 +645,13 @@ function renderGame() {
       if (state.selected !== null && g.hand[state.selected] !== undefined) {
         const shard = g.hand[state.selected];
         const spots = legalCells(my, shard, rules).length;
+        const penalty = rules.discardPenalty || 0;
         hint.textContent =
           spots > 0
             ? `tap a glowing cell for the ${colorName(shard).toLowerCase()} shard`
-            : 'no legal cell for this shard — discard it';
+            : `no legal cell for this shard — discard it (−${penalty})`;
         actions.appendChild(
-          actionButton('Discard shard', 'btn-danger', () => {
+          actionButton(`Discard shard (−${penalty})`, 'btn-danger', () => {
             send({ type: 'discard', i: state.selected });
             state.selected = null;
           })
@@ -721,6 +725,7 @@ function openPeek(gamePlayer, rules) {
     `${b.sockets} socket${b.sockets === 1 ? '' : 's'}`,
     `${gamePlayer.spectrums} spectrum${gamePlayer.spectrums === 1 ? '' : 's'}`,
     `${gamePlayer.busts} crack${gamePlayer.busts === 1 ? '' : 's'}`,
+    `${gamePlayer.discards} discard${gamePlayer.discards === 1 ? '' : 's'}`,
   ];
   $('#peek-breakdown').textContent = parts.join(' · ');
   $('#overlay-peek').hidden = false;
