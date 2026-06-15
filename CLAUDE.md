@@ -48,7 +48,8 @@ server/index.js         OPTIONAL zero-dependency static dev server (npm start).
 worker/                 Cloudflare Worker that mints short-lived TURN credentials
                         (index.js + wrangler.toml + README). Keeps the relay key
                         out of this public page; net.js fetches creds via
-                        TURN_WORKER_URL, falling back to static relays if unset.
+                        TURN_WORKER_URL — if unset/unreachable it uses STUN only
+                        (direct connections, no relay).
 test/
   game.test.js          monte-carlo + unit tests for the engine (npm test).
   browser.e2e.js        full P2P game in 2 headless browsers w/ local PeerJS.
@@ -93,11 +94,12 @@ run the same build (Pages caches assets up to ~10 min).
 
 ## Known limitations
 
-- **TURN relays:** the free public relays in `ICE_CONFIG` are unreliable/dead. The
-  working relay is the `worker/` Cloudflare broker (deployed at
-  `https://vitrea-turn.vitrea.workers.dev`; `TURN_WORKER_URL` in `net.js`), which
-  mints short-lived credentials and bridges Wi-Fi with client isolation. If it is
-  ever unreachable the client falls back to the static relays / hotspot / cellular.
+- **TURN relay:** networks with client/AP isolation (some guest/hotel/office
+  Wi-Fi) block direct phone-to-phone links. The `worker/` Cloudflare broker
+  (deployed at `https://vitrea-turn.vitrea.workers.dev`; `TURN_WORKER_URL` in
+  `net.js`) mints short-lived credentials and relays around that. The dead free
+  public relays were removed once it went live, so there is **no relay fallback**
+  if the Worker is unreachable — play then needs a phone hotspot or cellular.
   The "Connection check" button diagnoses which leg fails.
 - Some restrictive cellular carriers (CGNAT) also block direct links → same fix.
 

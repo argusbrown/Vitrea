@@ -14,7 +14,8 @@ into a personal stained-glass window under placement constraints.
 tab, and everyone else's phone connects **directly to it over WebRTC**
 (peer-to-peer, via [PeerJS](https://peerjs.com)). A public signaling service is
 used once to introduce the phones to each other; after that, game traffic flows
-phone-to-phone.
+phone-to-phone. When a network blocks those direct links, the game falls back to
+a **TURN relay** so it still connects (see [If a phone can't join](#if-a-phone-cant-join)).
 
 So you can play at a pub, a campsite with cell coverage, or on a train:
 
@@ -44,14 +45,20 @@ server (`npx peer --port 9000 --path /vitrea`) and append
 
 ### If a phone can't join
 
-Joining now reports exactly where it got stuck instead of hanging:
+The home screen has a **Connection check** button that probes each leg of the
+connection separately — the matchmaking service, address discovery (STUN), and
+the relay — so a failure names its cause instead of leaving you guessing.
+
+Joining also reports exactly where it got stuck instead of hanging:
 
 - **"Could not reach the matchmaking service"** — that phone has no working
   path to the internet (or something is blocking `peerjs.com`).
-- **"…couldn't open a direct link between the phones"** — the network is
-  blocking device-to-device traffic. Guest/hotel/office Wi-Fi often does this
-  (AP isolation). Fix: have everyone use cellular data, or have the host start
-  a phone hotspot and the others join it.
+- **"…couldn't open a direct link between the phones"** — the network blocks
+  device-to-device traffic (guest/hotel/office Wi-Fi often does, via AP
+  isolation). The game automatically falls back to a **TURN relay** that bridges
+  the two phones, so this usually still connects. If the relay is *also* blocked
+  or unreachable, have everyone switch to cellular data, or have the host start a
+  phone hotspot and the others join it.
 - Make sure the **host's screen stays on** while people are joining — the game
   lives in the host's browser tab.
 
@@ -88,11 +95,19 @@ had equal turns — then the brightest window wins.
   also loaded by Node for tests). Bag composition, scoring values and board
   size are constants at the top.
 - `public/js/net.js` — the authoritative Room (host side) and the WebRTC
-  host/guest transports, including reconnect and host-resume logic.
+  host/guest transports, including reconnect and host-resume logic. Uses STUN
+  plus a Cloudflare TURN relay (credentials fetched at runtime) for networks
+  that block direct links.
+- `public/js/nettest.js` — the **Connection check** diagnostics on the home
+  screen (matchmaking, STUN, relay).
 - `public/js/app.js` — UI: state-driven rendering, no frameworks.
 - `public/js/vendor/` — vendored [PeerJS](https://github.com/peers/peerjs) and
   [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT).
 - `server/index.js` — optional zero-dependency static server for development.
+- `worker/` — a small [Cloudflare Worker](worker/README.md) that mints
+  short-lived TURN-relay credentials. It's a credential broker, **not** a game
+  server (the game stays serverless); it keeps the relay key out of the public
+  page. The game still works peer-to-peer without it — just without the relay.
 
 ### Tests
 
