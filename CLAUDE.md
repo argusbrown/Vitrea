@@ -35,15 +35,21 @@ public/
                         Game class + toJSON/fromJSON. Tuning constants at the top.
     net.js              VitreaNet: authoritative Room (host side) + host()/join()
                         WebRTC transports, reconnect, host-resume. ICE_CONFIG holds
-                        STUN+TURN servers. ?ps=host:port overrides signaling (tests).
+                        STUN only; the Cloudflare TURN relay is fetched at runtime
+                        (TURN_WORKER_URL). ?ps=host:port overrides signaling (tests).
     nettest.js          VitreaNetTest: home-screen "Connection check" diagnostics
-                        (probes signaling, STUN, each TURN relay separately).
+                        (probes signaling, STUN, and the Cloudflare relay).
     version.js          window.VITREA_VERSION {semver, build}. "__BUILD__" is
                         replaced with commit+date by the deploy workflow.
     app.js              UI: single state-driven render(), no framework.
     vendor/             peerjs.min.js, qrcode.js (both MIT, vendored — no CDN).
 server/index.js         OPTIONAL zero-dependency static dev server (npm start).
                         NOT used in production; Pages serves public/ directly.
+worker/                 Cloudflare Worker that mints short-lived TURN credentials
+                        (index.js + wrangler.toml + README). Keeps the relay key
+                        out of this public page; net.js fetches creds via
+                        TURN_WORKER_URL — if unset/unreachable it uses STUN only
+                        (direct connections, no relay).
 test/
   game.test.js          monte-carlo + unit tests for the engine (npm test).
   browser.e2e.js        full P2P game in 2 headless browsers w/ local PeerJS.
@@ -70,7 +76,10 @@ There is no build step and no production dependencies — `public/` is shipped a
 - **Keep the engine pure** (no DOM, no I/O) so it runs in both Node (tests) and the
   browser. It's loaded via the UMD wrapper at the top/bottom of `engine.js`.
 - **Tuning the game:** all constants (board size, bag composition, scoring,
-  MAX_ROUNDS) are at the top of `engine.js`. Change there only.
+  `DISCARD_PENALTY`, MAX_ROUNDS) are at the top of `engine.js`. Change there only.
+- **Scores can go negative.** Each deliberate discard costs `DISCARD_PENALTY`
+  points, so a player's `score` may dip below zero — tests assert an integer
+  score, not a non-negative one.
 - **No accidental control characters in regexes.** `sanitizeName` uses
   `\u0000-\u001f` escapes on purpose — don't paste literal control ranges.
 - **Versioning:** bump `semver` in BOTH `public/js/version.js` and `package.json`
@@ -88,10 +97,13 @@ run the same build (Pages caches assets up to ~10 min).
 
 ## Known limitations
 
-- **TURN relays:** the free public relays in `ICE_CONFIG` are unreliable/dead, so
-  play fails on Wi-Fi with client isolation. Workarounds: phone hotspot, or
-  cellular data. Permanent fix tracked in `todo.md` (#1: metered.ca or a Cloudflare
-  Worker). The "Connection check" button diagnoses which leg fails.
+- **TURN relay:** networks with client/AP isolation (some guest/hotel/office
+  Wi-Fi) block direct phone-to-phone links. The `worker/` Cloudflare broker
+  (deployed at `https://vitrea-turn.vitrea.workers.dev`; `TURN_WORKER_URL` in
+  `net.js`) mints short-lived credentials and relays around that. The dead free
+  public relays were removed once it went live, so there is **no relay fallback**
+  if the Worker is unreachable — play then needs a phone hotspot or cellular.
+  The "Connection check" button diagnoses which leg fails.
 - Some restrictive cellular carriers (CGNAT) also block direct links → same fix.
 
 ## Git

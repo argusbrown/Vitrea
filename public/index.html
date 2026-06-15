@@ -48,7 +48,10 @@
     </form>
 
     <p class="home-foot">2–6 players · phones connect to each other directly</p>
-    <button id="btn-nettest" class="btn btn-ghost btn-nettest" type="button">Connection check</button>
+    <div class="home-links">
+      <button id="btn-home-help" class="btn btn-ghost btn-nettest" type="button">How to play</button>
+      <button id="btn-nettest" class="btn btn-ghost btn-nettest" type="button">Connection check</button>
+    </div>
     <p class="version-line" id="version-line"></p>
   </section>
 
@@ -139,10 +142,17 @@
   <div class="overlay-card overlay-help">
     <h3>How to play</h3>
     <div class="rules">
+      <h4 class="rules-head">Getting started</h4>
+      <p><strong>Host a game:</strong> type your name and tap <em>Host a game on this phone</em>. This phone becomes the game table — keep the page open. Share the <strong>QR code</strong> or the 4-letter <strong>code</strong> shown next so others can join.</p>
+      <p><strong>Join a game:</strong> type your name, then scan the host's QR code, or enter their 4-letter code in the <em>code</em> box and tap <em>Join</em>. Everyone needs internet — but not the same Wi-Fi.</p>
+      <p><strong>Can't connect?</strong> Tap <em>Connection check</em> on the home screen to see which part of the link is blocked. Most networks work; some guest/hotel Wi-Fi needs everyone on cellular or a phone hotspot.</p>
+
+      <h4 class="rules-head">The rules</h4>
       <p><strong>On your turn</strong>, draw glass shards from the kiln one at a time. Every shard is revealed to all.</p>
       <p><strong>Crack!</strong> Draw a colour you already hold this turn and your glass shatters — you lose every shard you drew and your turn ends.</p>
       <p><strong>Prism shield.</strong> A <em>prism</em> is a wild. If you draw a colour you already hold but have a prism in hand, the prism is spent to absorb the clash instead of cracking — you keep going, minus one prism. Prisms never clash with each other, so you can stockpile shields.</p>
       <p><strong>Stop in time</strong> and you set each shard into your 5×5 window. Same colours may never touch side-by-side; a prism may sit anywhere.</p>
+      <p><strong>Discarding costs you.</strong> If a shard has no legal cell — or you simply don't want it — you may discard it, but each discarded shard costs <b>−1</b> point. Place when you can; throw glass away only when you must.</p>
       <p><strong>Perfect Spectrum:</strong> hold all six colours at once (prisms help you survive the clashes getting there) and score +7 on the spot.</p>
       <ul class="score-list">
         <li><b>+1</b> each shard set in your window</li>
@@ -150,6 +160,7 @@
         <li><b>+5</b> completed row · <b>+6</b> completed column</li>
         <li><b>+8</b> completed diagonal (either corner-to-corner line)</li>
         <li><b>+7</b> Perfect Spectrum · <b>+10</b> first to finish their window</li>
+        <li><b>−1</b> each shard you discard</li>
       </ul>
       <p>When someone completes their window, the round is played out so all have equal turns — then the brightest window wins.</p>
     </div>
@@ -163,8 +174,7 @@
     <ul class="nettest-list">
       <li data-row="signal"><span>Matchmaking service</span><b class="nt-status">…</b></li>
       <li data-row="stun"><span>Address discovery (STUN)</span><b class="nt-status">…</b></li>
-      <li data-row="turn0"><span>Relay 1 — PeerJS (UDP)</span><b class="nt-status">…</b></li>
-      <li data-row="turn1"><span>Relay 2 — OpenRelay (TCP/443)</span><b class="nt-status">…</b></li>
+      <li data-row="relay"><span>Relay (Cloudflare TURN)</span><b class="nt-status">…</b></li>
     </ul>
     <p class="nettest-verdict" id="nettest-verdict">Testing this network…</p>
     <button class="btn" data-close>Close</button>

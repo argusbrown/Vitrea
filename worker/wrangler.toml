@@ -1,0 +1,10 @@
+# Cloudflare Worker config for the Vitrea TURN credential broker.
+# Deploy:  cd worker && npx wrangler deploy
+# Secrets: npx wrangler secret put TURN_KEY_ID
+#          npx wrangler secret put TURN_KEY_API_TOKEN
+name = "vitrea-turn"
+main = "index.js"
+compatibility_date = "2026-06-13"
+
+# TURN_KEY_ID and TURN_KEY_API_TOKEN are set as encrypted secrets (above),
+# NOT here — never commit them.
