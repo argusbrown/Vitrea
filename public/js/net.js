@@ -58,7 +58,7 @@ const VitreaNet = (() => {
   // A Cloudflare Worker mints short-lived TURN credentials so the relay key
   // never ships in this public page. Set this to your deployed Worker URL (see
   // worker/README.md). Leave '' to skip it and use the static relays only.
-  const TURN_WORKER_URL = '';
+  const TURN_WORKER_URL = 'https://vitrea-turn.vitrea.workers.dev';
 
   // Fetched creds are cached until shortly before they expire; on any failure
   // we fall back to ICE_CONFIG so play still works without the relay.

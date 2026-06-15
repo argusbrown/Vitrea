@@ -2,14 +2,12 @@
 
 ## 1. Reliable TURN relay (highest priority for off-hotspot play)
 
-> **Status (2026-06-13):** Option B (Cloudflare) is **built** — the credential
-> Worker lives in [`worker/`](worker/) and the client side is wired in
-> `public/js/net.js` (`TURN_WORKER_URL`, `resolveIce`). **Remaining manual steps**
-> (only the repo owner can do them — see [`worker/README.md`](worker/README.md)):
-> 1. Cloudflare dashboard → Realtime → TURN → create a TURN key (Token ID + API token).
-> 2. `cd worker && npx wrangler login && wrangler secret put TURN_KEY_ID && wrangler secret put TURN_KEY_API_TOKEN && npx wrangler deploy`.
-> 3. Paste the deployed Worker URL into `TURN_WORKER_URL` in `public/js/net.js`, push.
-> 4. Verify with the home-screen Connection check.
+> **DONE (2026-06-14):** Option B (Cloudflare) is **live**. The credential Worker
+> ([`worker/`](worker/)) is deployed at `https://vitrea-turn.vitrea.workers.dev`
+> and wired into `public/js/net.js` (`TURN_WORKER_URL`, `resolveIce`). The
+> `TURN_KEY_ID` / `TURN_KEY_API_TOKEN` secrets live in the Worker (not the repo).
+> To rotate creds: regenerate the key in the dashboard → `wrangler secret put` the
+> new values. To verify: home-screen Connection check, relay leg should pass.
 
 **Problem:** On Wi-Fi with client/AP isolation (phones can't talk directly), WebRTC
 needs a TURN relay to bridge them. The two *free public* relays currently in

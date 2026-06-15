@@ -92,12 +92,12 @@ run the same build (Pages caches assets up to ~10 min).
 
 ## Known limitations
 
-- **TURN relays:** the free public relays in `ICE_CONFIG` are unreliable/dead, so
-  play fails on Wi-Fi with client isolation. Workarounds: phone hotspot, or
-  cellular data. **Permanent fix is built but not yet live:** the `worker/`
-  Cloudflare relay broker just needs deploying + `TURN_WORKER_URL` set in
-  `net.js` (see `todo.md` #1 / `worker/README.md`). The "Connection check" button
-  diagnoses which leg fails.
+- **TURN relays:** the free public relays in `ICE_CONFIG` are unreliable/dead. The
+  working relay is the `worker/` Cloudflare broker (deployed at
+  `https://vitrea-turn.vitrea.workers.dev`; `TURN_WORKER_URL` in `net.js`), which
+  mints short-lived credentials and bridges Wi-Fi with client isolation. If it is
+  ever unreachable the client falls back to the static relays / hotspot / cellular.
+  The "Connection check" button diagnoses which leg fails.
 - Some restrictive cellular carriers (CGNAT) also block direct links → same fix.
 
 ## Git
