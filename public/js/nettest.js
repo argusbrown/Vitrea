@@ -82,7 +82,12 @@ const VitreaNetTest = (() => {
     const rows = [
       { id: 'signal', probe: () => probeSignaling(10000) },
       { id: 'stun', probe: () => probeIceServer(stunGroup, 'srflx', 8000) },
-      ...turnGroups.map((g, i) => ({ id: `turn${i}`, probe: () => probeIceServer(g, 'relay', 10000) })),
+      // One relay row: our Cloudflare TURN relay, whose credentials are fetched
+      // from the Worker. If the Worker is unreachable there are no turn groups,
+      // so the relay simply reports unreachable.
+      { id: 'relay', probe: () => (turnGroups.length
+        ? Promise.all(turnGroups.map((g) => probeIceServer(g, 'relay', 10000))).then((rs) => rs.some(Boolean))
+        : Promise.resolve(false)) },
     ];
 
     const results = {};
@@ -92,7 +97,7 @@ const VitreaNetTest = (() => {
       report(row.id, results[row.id] ? 'ok' : 'bad');
     }));
 
-    const anyRelay = turnGroups.some((_, i) => results[`turn${i}`]);
+    const anyRelay = results.relay;
     if (!results.signal) {
       return 'This network blocks the matchmaking service, so games cannot start here at all. Try cellular data.';
     }

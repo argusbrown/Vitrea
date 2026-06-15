@@ -35,9 +35,10 @@ public/
                         Game class + toJSON/fromJSON. Tuning constants at the top.
     net.js              VitreaNet: authoritative Room (host side) + host()/join()
                         WebRTC transports, reconnect, host-resume. ICE_CONFIG holds
-                        STUN+TURN servers. ?ps=host:port overrides signaling (tests).
+                        STUN only; the Cloudflare TURN relay is fetched at runtime
+                        (TURN_WORKER_URL). ?ps=host:port overrides signaling (tests).
     nettest.js          VitreaNetTest: home-screen "Connection check" diagnostics
-                        (probes signaling, STUN, each TURN relay separately).
+                        (probes signaling, STUN, and the Cloudflare relay).
     version.js          window.VITREA_VERSION {semver, build}. "__BUILD__" is
                         replaced with commit+date by the deploy workflow.
     app.js              UI: single state-driven render(), no framework.

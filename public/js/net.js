@@ -32,26 +32,14 @@ const VitreaNet = (() => {
 
   // Optional override of the signaling server: ?ps=host:port (used by the
   // automated tests, and handy if the public PeerJS cloud is ever down).
-  // The ICE list extends PeerJS's default (one STUN + UDP-only TURN) with
-  // extra STUN and TCP/443 relays so restrictive networks can still connect.
+  // STUN is free/unlimited. The actual TURN relay is our Cloudflare broker,
+  // whose short-lived credentials are fetched at runtime (TURN_WORKER_URL +
+  // resolveIce below) and prepended to this list. The free public relays
+  // (PeerJS / OpenRelay) were removed once the Cloudflare relay went live —
+  // they were dead in testing and provided no real fallback.
   const ICE_CONFIG = {
     iceServers: [
       { urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
-      {
-        urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'],
-        username: 'peerjs',
-        credential: 'peerjsp',
-      },
-      {
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
-          'turns:openrelay.metered.ca:443',
-        ],
-        username: 'openrelayproject',
-        credential: 'openrelayproject',
-      },
     ],
   };
 
