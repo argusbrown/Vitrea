@@ -252,6 +252,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 }
 
 .btn-nettest { margin-top: 14px; font-size: 0.8rem; padding: 7px 14px; }
+.home-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 .nettest-list {
   list-style: none;
@@ -766,6 +767,8 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 
 .rules { text-align: left; display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; line-height: 1.45; }
 .rules strong, .rules b { color: var(--gold-hi); }
+.rules-head { margin: 6px 0 0; color: var(--gold-hi); font-weight: 600; font-size: 1.08rem; letter-spacing: 0.01em; }
+.rules-head:first-child { margin-top: 0; }
 .score-list { list-style: none; display: flex; flex-direction: column; gap: 4px; padding-left: 4px; }
 
 .banner {

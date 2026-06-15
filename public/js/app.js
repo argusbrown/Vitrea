@@ -852,6 +852,7 @@ function setup() {
   $('#btn-game-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
   $('#btn-game-quit').addEventListener('click', openQuit);
   $('#btn-lobby-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
+  $('#btn-home-help').addEventListener('click', () => { $('#overlay-help').hidden = false; });
   $('#btn-leave-lobby').addEventListener('click', leaveGame);
   $('#btn-leave-end').addEventListener('click', leaveGame);
   $('#btn-nettest').addEventListener('click', runConnectionCheck);
