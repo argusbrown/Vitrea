@@ -49,7 +49,8 @@ const SOUND_MAP = {
   reveal:   { kind: 'chime', partials: GLASS, base: 440, dur: 0.9, attack: 0.005, detune: 18, scaleByIntensity: true },
   // placement: round marimba-like tone with a soft 20ms attack (no harsh transient).
   placed:   { kind: 'chime', partials: MARIMBA, base: 330, dur: 0.7, attack: 0.020 },
-  score:    { kind: 'chime', partials: GLASS, base: 660, dur: 0.6, attack: 0.004 },
+  // score (reward): a soft two-note marimba "ta-da" rising a fifth, not a sharp chime.
+  score:    { kind: 'chime', partials: MARIMBA, base: 660, dur: 0.5, attack: 0.012, seq: [{ m: 1, t: 0 }, { m: 1.5, t: 0.10 }] },
   spectrum: { kind: 'chime', partials: GLASS, base: 880, dur: 1.1, attack: 0.004 },
   shield:   { kind: 'chime', partials: GLASS, base: 550, dur: 0.7, attack: 0.004 },
   finish:   { kind: 'chime', partials: GLASS, base: 740, dur: 1.0, attack: 0.004 },
@@ -121,17 +122,23 @@ function playChime(recipe, opts) {
     const cents = (Math.random() * 2 - 1) * recipe.detune;
     base *= Math.pow(2, cents / 1200);
   }
-  for (const [mult, amp] of recipe.partials) {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = base * mult;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(amp, t + (recipe.attack || 0.005));
-    g.gain.exponentialRampToValueAtTime(0.0001, t + recipe.dur);
-    osc.connect(g).connect(master);
-    osc.start(t);
-    osc.stop(t + recipe.dur + 0.05);
+  // A recipe may be one note, or a short sequence: seq = [{m,t}, ...] where
+  // m scales the base pitch and t offsets the start (a little rising "ta-da").
+  const notes = recipe.seq || [{ m: 1, t: 0 }];
+  for (const note of notes) {
+    const start = t + (note.t || 0);
+    for (const [mult, amp] of recipe.partials) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = base * note.m * mult;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(amp, start + (recipe.attack || 0.005));
+      g.gain.exponentialRampToValueAtTime(0.0001, start + recipe.dur);
+      osc.connect(g).connect(master);
+      osc.start(start);
+      osc.stop(start + recipe.dur + 0.05);
+    }
   }
 }
 
