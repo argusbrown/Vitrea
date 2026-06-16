@@ -113,14 +113,41 @@ function playRandomGame(numPlayers, seedTag) {
   assert(g.turnSeat === 1, 'turn ends when the hand empties');
 }
 
-// spectrum: holding all six colours scores and moves to placement
+// spectrum: holding all six colours scores the top tier and moves to placement
 {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
   g.bag.push(...COLORS.slice().reverse()); // next six pops are six unique colors
   for (let i = 0; i < 6; i++) g.draw('a');
-  assert(g.players[0].score === 7, 'spectrum bonus scored');
+  assert(g.players[0].score === 12, 'full spectrum bonus scored');
   assert(g.players[0].spectrums === 1, 'spectrum counted');
   assert(g.turnPhase === 'place', 'spectrum forces placement');
+}
+
+// partial spectrum: banking 5 distinct colours pays the mid tier on stop
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.bag.push(...COLORS.slice(0, 5).reverse()); // five unique colours, no sixth
+  for (let i = 0; i < 5; i++) g.draw('a');
+  assert(g.players[0].score === 0, 'no bonus until banked');
+  g.stop('a');
+  assert(g.players[0].score === 6, 'five-colour bank scores the 5 tier');
+  assert(g.players[0].spectrums === 0, 'partial is not a full spectrum');
+  assert(g.turnPhase === 'place', 'stop moves to placement');
+}
+
+// partial spectrum: banking 4 colours pays the low tier; 3 or fewer pays nothing
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  g.bag.push(...COLORS.slice(0, 4).reverse());
+  for (let i = 0; i < 4; i++) g.draw('a');
+  g.stop('a');
+  assert(g.players[0].score === 3, 'four-colour bank scores the 4 tier');
+
+  const h = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  h.bag.push(...COLORS.slice(0, 3).reverse());
+  for (let i = 0; i < 3; i++) h.draw('a');
+  h.stop('a');
+  assert(h.players[0].score === 0, 'three colours earns no partial bonus');
 }
 
 // prism shield: a clash is absorbed by spending a prism instead of busting

@@ -69,10 +69,15 @@ revealed to all players.
 
 - **Crack!** Draw a colour you already drew this turn and your glass shatters —
   you lose every shard you drew and your turn ends.
+- **Prism shield.** A **prism** is wild — it never clashes, so you can stockpile
+  prisms, and if you draw a colour you already hold you may spend one to absorb
+  the clash instead of cracking. When placed, a prism may sit anywhere.
 - **Stop in time** and you set each shard into your window. The same colour may
-  never touch side-by-side. A **prism** is wild and may sit anywhere — but two
-  prisms in one turn crack like any pair.
-- **Perfect Spectrum:** survive 6 draws in one turn and score **+7** on the spot.
+  never touch side-by-side.
+- **Chase the spectrum.** The more distinct colours you bank in one turn, the
+  bigger the bonus — **+3 / +6 / +12** for 4 / 5 / all 6 colours — so pushing
+  pays even short of the full set. Holding all six is a **Perfect Spectrum**,
+  scored the instant you draw the sixth.
 - **Discarding costs you.** A shard with no legal cell (or one you don't want)
   may be discarded, but each discard costs **−1** point.
 
@@ -85,7 +90,7 @@ revealed to all players.
 | completed row | **+5** |
 | completed column | **+6** |
 | completed single-colour diagonal (prism is wild) | **+8** |
-| Perfect Spectrum | **+7** |
+| bank 4 / 5 / all 6 colours in a turn (6 = Perfect Spectrum) | **+3 / +6 / +12** |
 | first to finish their window | **+10** |
 | each shard discarded | **−1** |
 

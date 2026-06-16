@@ -56,14 +56,18 @@ All knobs are constants at the top of `public/js/engine.js`:
 - Board size: `ROWS` 5 × `COLS` 5 (square enables the two diagonals).
 - Game length feels long? Lower `MAX_ROUNDS` (30) or `COPIES_PER_COLOR` (18).
 - Prisms double as shields now — too common/rare? `PRISM_COUNT` (12).
-- Scoring weights: `SPECTRUM_BONUS` 7, `MATCH_BONUS` 3, `ROW_BONUS` 5,
-  `COL_BONUS` 6, `DIAG_BONUS` 8, `FINISH_BONUS` 10.
+- Scoring weights: `SPECTRUM_TIERS` {4:3, 5:6, 6:12}, `MATCH_BONUS` 3,
+  `ROW_BONUS` 5, `COL_BONUS` 6, `DIAG_BONUS` 8, `FINISH_BONUS` 10.
 - Diagonals aren't constrained by the no-adjacent-colour rule (diagonal cells
   don't touch orthogonally), so they're a touch easier than rows/cols — tune
   `DIAG_BONUS` down if they feel too cheap.
-- Perfect Spectrum now = holding all six colours at once (`SPECTRUM_SIZE` =
-  number of colours). The prism shield is what makes surviving to all six
-  feasible; if it feels too easy, lower `PRISM_COUNT`.
+- Spectrum scoring is tiered (v1.14.0): banking 4/5/6 distinct colours in a turn
+  pays 3/6/12 via `SPECTRUM_TIERS`. Holding all six (`SPECTRUM_SIZE`) auto-scores
+  the top tier as a Perfect Spectrum; 4–5 score when you stop. The prism shield is
+  what makes surviving toward six feasible. A full spectrum is ~1 in 20 (keep
+  pressing); a 5-colour bank ~1 in 5. If the top tier feels too rare, raise
+  `PRISM_COUNT` or lower `SPECTRUM_SIZE`; if partials feel too cheap, retune the
+  tier table.
 
 ## 3. Sound effects
 
