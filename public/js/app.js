@@ -306,6 +306,16 @@ function processEvents(events) {
   const g = game();
   for (const ev of events) {
     const mine = state.you && g.players[ev.seat] && g.players[ev.seat].id === state.you.id;
+
+    // Sound: single map-driven dispatch (binding lives in sfx.js SOUND_MAP).
+    if (ev.type === 'reveal') {
+      // A busting draw is silent — the 'bust' event plays the shatter.
+      // crackRisk reads the post-draw hand, so the pitch tracks rising risk.
+      if (!ev.crack) VitreaSfx.play('reveal', { mine, intensity: crackRisk(g) / 100 });
+    } else {
+      VitreaSfx.play(ev.type, { mine });
+    }
+
     switch (ev.type) {
       case 'bust':
         playBustAnimation();
@@ -785,6 +795,7 @@ function setupHome() {
 
   $('#home-form').addEventListener('submit', (e) => {
     e.preventDefault();
+    VitreaSfx.ensureAudio(); // unlock audio inside the user gesture (iOS)
     const name = nameInput.value.trim();
     if (!name) return nameInput.focus();
     localStorage.setItem(NAME_KEY, name);
@@ -795,6 +806,7 @@ function setupHome() {
   });
 
   $('#btn-join').addEventListener('click', () => {
+    VitreaSfx.ensureAudio(); // unlock audio inside the user gesture (iOS)
     const name = nameInput.value.trim();
     const code = $('#code-input').value.trim().toUpperCase();
     if (!name) return nameInput.focus();
@@ -862,6 +874,25 @@ function setup() {
   $('#btn-leave-end').addEventListener('click', leaveGame);
   $('#btn-nettest').addEventListener('click', runConnectionCheck);
 
+  // Sound mute toggle — static buttons (home + in-game), wired once here.
+  ['#btn-mute', '#btn-game-mute'].forEach((sel) => {
+    const b = $(sel);
+    if (b) b.addEventListener('click', () => {
+      VitreaSfx.ensureAudio();
+      VitreaSfx.toggleMute();
+      updateMuteUI();
+    });
+  });
+  updateMuteUI();
+
+  // Arm audio on the first gesture anywhere — covers an auto-rejoined player
+  // who lands mid-game without tapping Host/Join/mute. iOS needs a gesture.
+  const armAudio = () => {
+    VitreaSfx.ensureAudio();
+    document.removeEventListener('pointerdown', armAudio);
+  };
+  document.addEventListener('pointerdown', armAudio);
+
   document.querySelectorAll('.overlay').forEach((overlay) => {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay || e.target.closest('[data-close]')) overlay.hidden = true;
@@ -869,6 +900,17 @@ function setup() {
   });
 
   resumeIfPossible();
+}
+
+function updateMuteUI() {
+  const m = VitreaSfx.isMuted();
+  const home = $('#btn-mute');
+  if (home) home.textContent = m ? '🔇 Sound off' : '🔊 Sound on';
+  const game = $('#btn-game-mute');
+  if (game) {
+    game.textContent = m ? '🔇' : '🔊';
+    game.setAttribute('aria-pressed', String(m));
+  }
 }
 
 setup();

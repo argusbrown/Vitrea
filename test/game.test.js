@@ -272,3 +272,23 @@ for (let i = 0; i < GAMES; i++) {
 
 console.log(`ok — ${GAMES} random games completed`);
 console.log(`   avg rounds: ${(totalRounds / GAMES).toFixed(1)}, window-finish endings: ${finishes}/${GAMES}`);
+
+// --- sfx node-safety guards -------------------------------------------------
+// sfx.js is browser-only (Web Audio) but must load under Node without throwing
+// and no-op when AudioContext is undefined, so this runner can require it.
+{
+  const Sfx = require('../public/js/sfx');
+  assert(typeof Sfx.play === 'function', 'sfx exposes play()');
+  assert(typeof Sfx.ensureAudio === 'function', 'sfx exposes ensureAudio()');
+  assert(typeof Sfx.setMuted === 'function', 'sfx exposes setMuted()');
+  // No AudioContext in Node: every entry point must be a safe no-op.
+  Sfx.ensureAudio();
+  Sfx.play('reveal', { mine: true, intensity: 0.5 });
+  Sfx.play('bust', { mine: false });
+  Sfx.play('totally-unknown-event', {}); // unmapped -> silent no-op
+  Sfx.play('turn'); // mineOnly without opts -> no throw
+  assert(Sfx.isMuted() === false, 'default unmuted (no localStorage in Node)');
+  assert(Sfx.toggleMute() === true && Sfx.isMuted() === true, 'toggle mutes');
+  assert(Sfx.setMuted(false) === false, 'setMuted returns new state');
+  console.log('ok — sfx.js loads + no-ops safely under Node');
+}
