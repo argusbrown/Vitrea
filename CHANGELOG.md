@@ -5,6 +5,13 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.13.2] - 2026-06-16
+
+### Changed
+- Softened the scoring sound. Completing a socket, row, column, or diagonal now
+  plays a gentle two-note marimba "ta-da" rising a fifth, instead of the bright
+  glassy chime that clashed with the placement sound on scoring placements.
+
 ## [1.13.1] - 2026-06-16
 
 ### Changed
