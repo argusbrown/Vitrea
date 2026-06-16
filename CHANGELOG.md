@@ -5,6 +5,20 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.14.0] - 2026-06-16
+
+### Changed
+- Tiered spectrum scoring. Banking distinct colours in one turn now pays on a
+  ladder instead of all-or-nothing: 4 colours = +3 ("Glimmer"), 5 colours = +6
+  ("Radiance"), all 6 = +12 (Perfect Spectrum). The full spectrum (~1 in 20)
+  finally out-scores a diagonal (+8) and the finish bonus (+10), and a near-miss
+  is worth banking instead of wasted. Tunable via `SPECTRUM_TIERS` in
+  `engine.js`. Replaces the flat `SPECTRUM_BONUS` of 7.
+
+### Added
+- Partial-spectrum feedback: a "Glimmer"/"Radiance" banner and a softer chime
+  fire when you bank 4–5 colours, distinct from the full Perfect Spectrum cue.
+
 ## [1.13.2] - 2026-06-16
 
 ### Changed
