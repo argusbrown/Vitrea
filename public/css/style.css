@@ -532,6 +532,7 @@ input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba
 }
 .kiln-hint .risk-hot { color: var(--ruby-hi); font-weight: 600; }
 .kiln-hint .shielded { color: var(--sapphire-hi); font-weight: 600; }
+.kiln-hint .zone { color: var(--amber-hi); font-weight: 600; }
 
 .kiln-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .kiln-actions .btn { font-size: 1.05rem; padding: 11px 20px; }

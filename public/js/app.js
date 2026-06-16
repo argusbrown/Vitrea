@@ -296,6 +296,28 @@ function hasShield(g) {
   return g.hand.includes(g.rules.prism);
 }
 
+// How many distinct colours (prisms are wild, not a colour) are in hand, what
+// banking now would score under the tiered spectrum rules, and the next tier up.
+function spectrumBank(g) {
+  const tiers = g.rules.spectrumTiers || {};
+  const colors = new Set(g.hand.filter((s) => s !== g.rules.prism)).size;
+  const bonus = tiers[colors] || 0;
+  let next = null;
+  for (const k of Object.keys(tiers).map(Number).sort((a, b) => a - b)) {
+    if (k > colors) { next = { colors: k, bonus: tiers[k] }; break; }
+  }
+  return { colors, bonus, next };
+}
+
+// Spectrum-zone name for a distinct-colour count (null below the first tier).
+// Mirrors the labels shown on the radiance/spectrum banners.
+function zoneName(colors) {
+  return colors >= 6 ? 'Perfect Spectrum'
+    : colors === 5 ? 'Radiance'
+    : colors === 4 ? 'Glimmer'
+    : null;
+}
+
 function vibrate(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
@@ -639,21 +661,35 @@ function renderGame() {
     ? `<b class="shielded">prism shield ready</b> · clash risk ~${risk}%`
     : `crack risk ~<b class="${risk >= 40 ? 'risk-hot' : ''}">${risk}%</b>`;
 
+  // Live spectrum-zone readout: shows the bonus banked right now and the next
+  // milestone, so players see they're entering Glimmer/Radiance before stopping.
+  const bank = spectrumBank(g);
+  let zoneText = '';
+  if (g.hand.length > 0) {
+    const zone = zoneName(bank.colors);
+    if (zone) {
+      zoneText = `<b class="zone">✦ ${zone} +${bank.bonus} banked</b>`;
+      if (bank.next) zoneText += ` · +${bank.next.bonus} at ${bank.next.colors}`;
+    } else if (bank.next) {
+      const need = bank.next.colors - bank.colors;
+      zoneText = `${bank.colors} colour${bank.colors === 1 ? '' : 's'} · `
+        + `${need} more for ${zoneName(bank.next.colors)} (+${bank.next.bonus})`;
+    }
+  }
+  const zoneLine = zoneText ? `${zoneText}<br>` : '';
+
   if (g.turnPhase === 'draw') {
     if (myTurn) {
       title.innerHTML = '<em>Your turn</em> — draw from the kiln';
-      hint.innerHTML = g.hand.length === 0 ? 'first draw is always safe' : riskText;
+      hint.innerHTML = g.hand.length === 0 ? 'first draw is always safe' : zoneLine + riskText;
       actions.appendChild(actionButton('Draw a shard', 'btn-gold', () => send({ type: 'draw' })));
-      actions.appendChild(
-        actionButton(
-          g.hand.length === 0 ? 'Pass' : `Keep ${g.hand.length} shard${g.hand.length > 1 ? 's' : ''}`,
-          '',
-          () => send({ type: 'stop' })
-        )
-      );
+      const keepLabel = g.hand.length === 0
+        ? 'Pass'
+        : `Keep ${g.hand.length} shard${g.hand.length > 1 ? 's' : ''}${bank.bonus > 0 ? ` · +${bank.bonus}` : ''}`;
+      actions.appendChild(actionButton(keepLabel, '', () => send({ type: 'stop' })));
     } else {
       title.innerHTML = `<em>${active.name}</em> is drawing…`;
-      hint.innerHTML = g.hand.length > 0 ? riskText : '';
+      hint.innerHTML = g.hand.length > 0 ? zoneLine + riskText : '';
     }
   } else {
     // placing
