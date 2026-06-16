@@ -5,6 +5,15 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.14.1] - 2026-06-16
+
+### Added
+- Live spectrum-zone readout while drawing. The kiln hint now shows how many
+  distinct colours you hold and what you'd bank by stopping now ("✦ Glimmer +3
+  banked · +6 at 5"), plus a "2 more for Glimmer (+3)" nudge before the first
+  tier. The Keep button shows the banked bonus inline ("Keep 5 shards · +6"), so
+  you can see you're entering Glimmer/Radiance before you commit.
+
 ## [1.14.0] - 2026-06-16
 
 ### Changed
