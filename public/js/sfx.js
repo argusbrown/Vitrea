@@ -52,6 +52,8 @@ const SOUND_MAP = {
   // score (reward): a soft two-note marimba "ta-da" rising a fifth, not a sharp chime.
   score:    { kind: 'chime', partials: MARIMBA, base: 660, dur: 0.5, attack: 0.012, seq: [{ m: 1, t: 0 }, { m: 1.5, t: 0.10 }] },
   spectrum: { kind: 'chime', partials: GLASS, base: 880, dur: 1.1, attack: 0.004 },
+  // partial spectrum (bank 4–5 colours): softer, lower cousin of the spectrum chime.
+  radiance: { kind: 'chime', partials: GLASS, base: 660, dur: 0.8, attack: 0.005 },
   shield:   { kind: 'chime', partials: GLASS, base: 550, dur: 0.7, attack: 0.004 },
   finish:   { kind: 'chime', partials: GLASS, base: 740, dur: 1.0, attack: 0.004 },
   turn:     { kind: 'chime', partials: GLASS, base: 520, dur: 0.6, attack: 0.004, mineOnly: true },

@@ -328,6 +328,13 @@ function processEvents(events) {
         vibrate([30, 30, 30, 30, 90]);
         if (!mine) toast(`${ev.name} drew a Perfect Spectrum!`);
         break;
+      case 'radiance': {
+        const label = ev.colors === 5 ? 'Radiance' : 'Glimmer';
+        banner(`${label} +${ev.points}`, 'b-spectrum');
+        vibrate([20, 30, 60]);
+        if (!mine) toast(`${ev.name} banked ${ev.colors} colours (+${ev.points})`);
+        break;
+      }
       case 'shield':
         if (mine) {
           banner('Prism shield!', 'b-spectrum');

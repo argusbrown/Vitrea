@@ -18,7 +18,10 @@ const COPIES_PER_COLOR = 18;
 const PRISM_COUNT = 12;
 
 const SPECTRUM_SIZE = 6;   // a Perfect Spectrum = holding all six colours at once
-const SPECTRUM_BONUS = 7;
+// Tiered draw-phase payoff by how many distinct colours you bank. A full spectrum
+// (~1 in 20) pays big; banking 4–5 colours rewards the push instead of all-or-nothing.
+// Keyed by exact colour count; counts below 4 earn nothing.
+const SPECTRUM_TIERS = { 4: 3, 5: 6, 6: 12 };
 const MATCH_BONUS = 3;
 const ROW_BONUS = 5;       // a row holds COLS shards
 const COL_BONUS = 6;       // a column holds ROWS shards
@@ -175,9 +178,10 @@ class Game {
     this.hand.push(shard);
     this.emit('reveal', { seat: p.seat, shard, crack: false });
     if (this.handColors().size >= SPECTRUM_SIZE) {
-      p.score += SPECTRUM_BONUS;
+      const points = SPECTRUM_TIERS[SPECTRUM_SIZE];
+      p.score += points;
       p.spectrums++;
-      this.emit('spectrum', { seat: p.seat, name: p.name, points: SPECTRUM_BONUS });
+      this.emit('spectrum', { seat: p.seat, name: p.name, points, colors: SPECTRUM_SIZE });
       this.turnPhase = 'place';
     }
   }
@@ -191,6 +195,14 @@ class Game {
       return;
     }
     this.turnPhase = 'place';
+    // Banking 4–5 distinct colours pays a partial-spectrum bonus (6 auto-scores in
+    // draw() before you can stop, so colours here is always < SPECTRUM_SIZE).
+    const colors = this.handColors().size;
+    const points = SPECTRUM_TIERS[colors] || 0;
+    if (points > 0) {
+      p.score += points;
+      this.emit('radiance', { seat: p.seat, name: p.name, points, colors });
+    }
     this.emit('stopped', { seat: p.seat, name: p.name, kept: this.hand.length });
   }
 
@@ -373,7 +385,7 @@ class Game {
         colors: COLORS,
         prism: PRISM,
         spectrumSize: SPECTRUM_SIZE,
-        spectrumBonus: SPECTRUM_BONUS,
+        spectrumTiers: SPECTRUM_TIERS,
         matchBonus: MATCH_BONUS,
         rowBonus: ROW_BONUS,
         colBonus: COL_BONUS,
