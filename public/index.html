@@ -51,6 +51,7 @@
     <div class="home-links">
       <button id="btn-home-help" class="btn btn-ghost btn-nettest" type="button">How to play</button>
       <button id="btn-nettest" class="btn btn-ghost btn-nettest" type="button">Connection check</button>
+      <button id="btn-mute" class="btn btn-ghost btn-nettest" type="button" aria-label="toggle sound">🔊 Sound on</button>
     </div>
     <p class="version-line" id="version-line"></p>
   </section>
@@ -83,6 +84,7 @@
       <div class="topbar-meta">
         <span id="round-label"></span>
         <span class="topbar-btns">
+          <button id="btn-game-mute" class="icon-btn" aria-label="toggle sound">🔊</button>
           <button id="btn-game-help" class="icon-btn" aria-label="rules">?</button>
           <button id="btn-game-quit" class="icon-btn" aria-label="leave or end game">⏻</button>
         </span>
@@ -188,6 +190,7 @@
 <script src="js/vendor/qrcode.js"></script>
 <script src="js/vendor/peerjs.min.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/sfx.js"></script>
 <script src="js/net.js"></script>
 <script src="js/nettest.js"></script>
 <script src="js/app.js"></script>

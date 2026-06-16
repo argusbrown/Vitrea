@@ -56,6 +56,32 @@ async function main() {
   const guest = await guestCtx.newPage();
   host.on('pageerror', (e) => fail('host page error: ' + e.message));
   guest.on('pageerror', (e) => fail('guest page error: ' + e.message));
+  // Fail on any sound-related console error (keeps focus off pre-existing WebRTC noise).
+  const soundErr = (who) => (msg) => {
+    if (msg.type() !== 'error') return;
+    const t = msg.text();
+    if (/sfx|VitreaSfx|AudioContext|audio/i.test(t)) fail(`${who} sound console error: ${t}`);
+  };
+  host.on('console', soundErr('host'));
+  guest.on('console', soundErr('guest'));
+
+  // Count VitreaSfx.play() calls on the guest so we can prove a mid-game reload
+  // does NOT replay historical events as sound (the firstSnapshot/lastSeq guard).
+  await guestCtx.addInitScript(() => {
+    window.__sfxPlays = 0;
+    let _v;
+    Object.defineProperty(window, 'VitreaSfx', {
+      configurable: true,
+      get() { return _v; },
+      set(val) {
+        _v = val;
+        if (val && typeof val.play === 'function') {
+          const orig = val.play.bind(val);
+          val.play = (...a) => { window.__sfxPlays++; return orig(...a); };
+        }
+      },
+    });
+  });
 
   // --- host creates a room ---
   await host.goto(BASE);
@@ -95,6 +121,20 @@ async function main() {
   await host.waitForSelector('#screen-game:not([hidden])', { timeout: 10000 });
   await guest.waitForSelector('#screen-game:not([hidden])', { timeout: 10000 });
 
+  // sound module loaded on both phones
+  for (const [who, page] of [['host', host], ['guest', guest]]) {
+    const ok = await page.evaluate(() => typeof window.VitreaSfx === 'object'
+      && typeof window.VitreaSfx.play === 'function');
+    if (!ok) fail(`${who}: VitreaSfx not loaded`);
+  }
+  console.log('ok — VitreaSfx present on both phones');
+
+  // mute the host now; we assert below that it survives the host reload
+  await host.click('#btn-game-mute');
+  const mutedNow = await host.evaluate(() => window.VitreaSfx.isMuted() && localStorage.getItem('vitrea-muted') === '1');
+  if (!mutedNow) fail('host mute toggle did not take / persist to localStorage');
+  console.log('ok — host muted, persisted to localStorage');
+
   for (let i = 0; i < 14; i++) {
     await act(host);
     await act(guest);
@@ -102,6 +142,14 @@ async function main() {
   }
   await host.screenshot({ path: `${OUT}/3-midgame-host.png` });
   await guest.screenshot({ path: `${OUT}/4-midgame-guest.png` });
+
+  // --- guest reload mid-game must NOT replay history as sound ---
+  await guest.reload();
+  await guest.waitForSelector('#screen-game:not([hidden])', { timeout: 20000 });
+  await guest.waitForTimeout(800); // let the resume snapshot (with full history) arrive
+  const replayed = await guest.evaluate(() => window.__sfxPlays || 0);
+  if (replayed !== 0) fail(`guest replayed ${replayed} sounds from history on reload (firstSnapshot guard broken)`);
+  console.log('ok — guest reload did not replay historical events as sound');
 
   // --- host phone "crashes": reload must resurrect the room ---
   const scoreBefore = await host.evaluate(() =>
@@ -112,6 +160,13 @@ async function main() {
     [...document.querySelectorAll('.chip-score')].map((e) => e.textContent).join(','));
   if (scoreBefore !== scoreAfter) fail(`host resume lost state (${scoreBefore} -> ${scoreAfter})`);
   console.log('ok — host reload resurrected the game, scores intact:', scoreAfter);
+
+  // mute set before the reload must persist (localStorage + restored UI)
+  const stillMuted = await host.evaluate(() => window.VitreaSfx.isMuted()
+    && localStorage.getItem('vitrea-muted') === '1'
+    && document.querySelector('#btn-game-mute').textContent.includes('🔇'));
+  if (!stillMuted) fail('host mute did not persist across reload');
+  console.log('ok — mute persisted across host reload');
 
   // guest must find the host again on its own
   await guest.waitForFunction(() => {
