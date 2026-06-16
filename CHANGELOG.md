@@ -5,6 +5,13 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.13.1] - 2026-06-16
+
+### Changed
+- Softened the tile-placement sound. It was a sharp glassy clink; it's now a
+  round, woody marimba-like tone with a gentle attack — calmer to hear over a
+  full game.
+
 ## [1.13.0] - 2026-06-16
 
 ### Added

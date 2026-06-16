@@ -41,12 +41,14 @@ const lastPlayed = Object.create(null); // cue name -> timestamp (ms)
 // [freq-multiplier, amplitude]; the non-integer ratios make it "glass".
 const GLASS = [[1, 0.6], [2.70, 0.26], [4.97, 0.15], [7.1, 0.07]];
 const DULL = [[1, 0.5], [2.1, 0.18]]; // softer, for discard / skip / pass
+const MARIMBA = [[1, 0.6], [4, 0.12]]; // round + woody (fundamental + soft 2-octave), for placement
 
 // event type -> synth recipe. The ONLY place event->sound is bound.
 const SOUND_MAP = {
   // draw: pitch climbs with bust risk (opts.intensity), plus per-draw detune.
   reveal:   { kind: 'chime', partials: GLASS, base: 440, dur: 0.9, attack: 0.005, detune: 18, scaleByIntensity: true },
-  placed:   { kind: 'chime', partials: GLASS, base: 330, dur: 0.5, attack: 0.004 },
+  // placement: round marimba-like tone with a soft 20ms attack (no harsh transient).
+  placed:   { kind: 'chime', partials: MARIMBA, base: 330, dur: 0.7, attack: 0.020 },
   score:    { kind: 'chime', partials: GLASS, base: 660, dur: 0.6, attack: 0.004 },
   spectrum: { kind: 'chime', partials: GLASS, base: 880, dur: 1.1, attack: 0.004 },
   shield:   { kind: 'chime', partials: GLASS, base: 550, dur: 0.7, attack: 0.004 },
