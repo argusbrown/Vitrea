@@ -41,6 +41,11 @@ public/
                         (probes signaling, STUN, and the Cloudflare relay).
     version.js          window.VITREA_VERSION {semver, build}. "__BUILD__" is
                         replaced with commit+date by the deploy workflow.
+    sfx.js              VitreaSfx: pure Web Audio sound effects (zero assets).
+                        UMD (module.exports AND window.VitreaSfx). Declarative
+                        SOUND_MAP keyed by game event; app.js dispatches one
+                        Sfx.play(ev.type) per event in processEvents. iOS unlock
+                        + mute toggle (localStorage 'vitrea-muted', default on).
     app.js              UI: single state-driven render(), no framework.
     vendor/             peerjs.min.js, qrcode.js (both MIT, vendored — no CDN).
 server/index.js         OPTIONAL zero-dependency static dev server (npm start).

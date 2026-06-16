@@ -65,19 +65,16 @@ All knobs are constants at the top of `public/js/engine.js`:
   number of colours). The prism shield is what makes surviving to all six
   feasible; if it feels too easy, lower `PRISM_COUNT`.
 
-## 3. Sound effects (designed + reviewed — ready to build)
+## 3. Sound effects
 
-> **PLANNED (2026-06-15):** The "sound effects" nice-to-have below has a full
-> design + engineering review. Approach B (glassy synthesized audio system, zero
-> assets) is approved and cleared to implement.
+> **DONE (shipped v1.13.0):** Approach B (glassy synthesized audio system, zero
+> assets) is live in `public/js/sfx.js` — pure Web Audio synthesis, a declarative
+> `SOUND_MAP` keyed by game event, single dispatch from `processEvents`. Glassy
+> chimes; draw pitch rises with `crackRisk`; synthesized shatter on bust; mute
+> toggle (default audible) persisted in localStorage.
 > Plan of record:
-> `~/.gstack/projects/argusbrown-Vitrea/abrown-main-design-20260615-162732.md`
-> Tasks: same dir, `tasks-eng-review-*.jsonl` (T1–T6).
-
-- **What:** New `public/js/sfx.js` — pure Web Audio synthesis (no audio files), a
-  declarative `SOUND_MAP` keyed by game event, single dispatch from
-  `processEvents`. Glassy chimes; draw pitch rises with `crackRisk`; synthesized
-  shatter on bust; mute toggle (default audible) persisted in localStorage.
+> `~/.gstack/projects/argusbrown-Vitrea/abrown-main-design-20260615-162732.md`.
+> Only Approach C (3a) remains as future work.
 
 ### 3a. Approach C — generative glass instrument (future, after B ships)
 - **What:** Add a "color → pitch" sound mode toggle mapping each shard color to a
