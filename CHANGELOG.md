@@ -5,6 +5,13 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.16.1] - 2026-06-24
+
+### Fixed
+- In-game "How to play" scoring now matches the v1.16.0 chain scoring: a shard
+  scores the row + column run it joins, and the stale "completed row / column"
+  bonus lines were removed. Added a one-line strategy hint about lining glass up.
+
 ## [1.16.0] - 2026-06-24
 
 ### Changed
