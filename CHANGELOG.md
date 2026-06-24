@@ -5,6 +5,14 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.16.2] - 2026-06-24
+
+### Fixed
+- The "Your window" score breakdown no longer lists separate "rows" and
+  "columns" (which stopped scoring on their own with v1.16.0 chain scoring).
+  Completed full rows and columns are now shown together as "bright lines",
+  matching the in-game and toast vocabulary.
+
 ## [1.16.1] - 2026-06-24
 
 ### Fixed

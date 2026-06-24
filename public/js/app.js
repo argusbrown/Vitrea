@@ -269,17 +269,18 @@ function scoredDiagonals(player, rules) {
   return { main: monochrome(main), anti: monochrome(anti) };
 }
 
-// Completed lines and matched sockets on a window — for the end-of-game breakdown.
+// Notable achievements on a window — for the score breakdown. Full rows/columns
+// no longer pay a separate bonus (chain scoring rewards the runs that fill them),
+// so completed rows + columns are surfaced together as "bright lines".
 function lineBreakdown(player, rules) {
   const w = player.window;
-  let rows = 0;
-  let cols = 0;
+  let lines = 0;
   let sockets = 0;
-  for (let r = 0; r < rules.rows; r++) if (w[r].every((x) => x !== null)) rows++;
+  for (let r = 0; r < rules.rows; r++) if (w[r].every((x) => x !== null)) lines++;
   for (let c = 0; c < rules.cols; c++) {
     let full = true;
     for (let r = 0; r < rules.rows; r++) if (w[r][c] === null) { full = false; break; }
-    if (full) cols++;
+    if (full) lines++;
   }
   for (const key in player.sockets) {
     const [r, c] = key.split(',').map(Number);
@@ -287,7 +288,7 @@ function lineBreakdown(player, rules) {
     if (s && (s === rules.prism || s === player.sockets[key])) sockets++;
   }
   const d = scoredDiagonals(player, rules);
-  return { rows, cols, diags: (d.main ? 1 : 0) + (d.anti ? 1 : 0), sockets };
+  return { lines, diags: (d.main ? 1 : 0) + (d.anti ? 1 : 0), sockets };
 }
 
 
@@ -787,8 +788,7 @@ function openPeek(gamePlayer, rules) {
 
   const b = lineBreakdown(gamePlayer, rules);
   const parts = [
-    `${b.rows} row${b.rows === 1 ? '' : 's'}`,
-    `${b.cols} column${b.cols === 1 ? '' : 's'}`,
+    `${b.lines} bright line${b.lines === 1 ? '' : 's'}`,
     `${b.diags} diagonal${b.diags === 1 ? '' : 's'}`,
     `${b.sockets} socket${b.sockets === 1 ? '' : 's'}`,
     `${gamePlayer.spectrums} spectrum${gamePlayer.spectrums === 1 ? '' : 's'}`,
