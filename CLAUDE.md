@@ -89,6 +89,16 @@ There is no build step and no production dependencies — `public/` is shipped a
   `\u0000-\u001f` escapes on purpose — don't paste literal control ranges.
 - **Versioning:** bump `semver` in BOTH `public/js/version.js` and `package.json`
   when shipping a user-visible change. The build hash is stamped automatically.
+- **Gameplay/scoring changes update ALL docs in the same change.** Any change to a
+  rule, a scoring value, or a play-affecting constant in `engine.js` must sync
+  every place that describes the rules, together with the code:
+  1. the in-game **"How to play"** overlay in `public/index.html` — the rules
+     prose *and* the `.score-list` (this is what players actually read, and the
+     easiest to forget);
+  2. `README.md` (the "How it plays" prose and the **Scoring** table);
+  3. `CHANGELOG.md` entry + the `semver` bump (see above).
+  Grep the rule's old numbers/keywords across `public/` and `README.md` before you
+  finish, so no stale value survives. Don't ship the engine change alone.
 - **Screens must scroll, not clip.** `.screen` uses `overflow-y:auto` and
   `justify-content: safe center`; tall content (big lobbies, full standings) must
   remain reachable on short phone viewports.
