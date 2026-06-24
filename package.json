@@ -1,6 +1,6 @@
 {
   "name": "vitrea",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Vitrea - a push-your-luck stained-glass drafting game for 2-6 phones, peer-to-peer in the browser",
   "main": "server/index.js",
   "scripts": {
