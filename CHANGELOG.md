@@ -5,6 +5,19 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.16.3] - 2026-06-24
+
+### Fixed
+- Rewrote the chain-scoring explanation in the in-game "How to play" (and README)
+  so it matches the engine: a shard scores the unbroken line it extends, counting
+  both directions only where a row and column cross, and a lone shard scores 1.
+  The old wording claimed it always scored "row and column", which contradicted
+  itself.
+- Clarified the adjacency rule — "touching shards may never share a colour" (it
+  applies in every direction, not just "side-by-side") — and noted that a line of
+  glass is therefore always a mix of colours. Reordered the spectrum tip ahead of
+  placement so the rules follow the turn's actual order.
+
 ## [1.16.2] - 2026-06-24
 
 ### Fixed
