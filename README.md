@@ -85,10 +85,8 @@ revealed to all players.
 
 | | |
 |---|---|
-| each shard set in your window | **+1** |
+| set a shard in your window | **+ the length of the contiguous row/column run it joins** (both, if it lands at a junction) |
 | socket filled with its matching colour | **+3** |
-| completed row | **+5** |
-| completed column | **+6** |
 | completed single-colour diagonal (prism is wild) | **+8** |
 | bank 4 / 5 / all 6 colours in a turn (6 = Perfect Spectrum) | **+3 / +6 / +12** |
 | first to finish their window | **+10** |

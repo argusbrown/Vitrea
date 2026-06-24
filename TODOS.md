@@ -97,3 +97,30 @@ All knobs are constants at the top of `public/js/engine.js`:
   skip a disconnected player).
 - Spectator mode for a 7th+ person.
 - A "copy join link" button in the lobby as an alternative to the QR code.
+
+## 5. Deepen placement skill — scarcity (lever C)
+
+> **Context:** `test/skill.sim.js` (a chance-vs-skill harness — seeds `Math.random`
+> to replay identical "shoes," then runs a bot ladder + variance decomposition)
+> showed placement was nearly a non-decision: ~12.7 legal cells per shard, all
+> worth a flat +1. Lever **B (chain scoring)** shipped in **v1.16.0** and lifted
+> *placement skill* (smart vs. random placement, draw held equal) from **58% →
+> 69%** while the luck floor actually *fell* (54% → 47%). Lever **C** is the next
+> step if we want placement to truly rival the press-your-luck read.
+
+- **What:** Make legal cells *scarce* so where you place is a real constraint, not
+  a pick from ~13 equivalent options. Two candidate mechanics (try separately):
+  - **Tighter adjacency** — also forbid *diagonal* same-colour neighbours, or forbid
+    a colour repeating anywhere in a row/column (Sagrada-style). Extend the
+    neighbour check in `Game.canPlace` (`public/js/engine.js`).
+  - **End-game empty-cell penalty** — unfilled cells cost points at `endGame()`, so
+    lazy/greedy early placement that strands cells gets punished.
+- **Why:** B made the ~13 choices *unequal* (reward); C makes them *fewer*
+  (constraint). Together they should push placement skill well past 69% — and as a
+  side effect, the existing `DISCARD_PENALTY` finally bites (today discards are a
+  near-non-event because everything fits somewhere).
+- **Risk:** Scarcity can make a press-your-luck party game feel punishing. Measure
+  before shipping: re-run `node test/skill.sim.js` and watch *placement skill* rise
+  **without** the luck floor / frustration climbing. Teach the `planner` bot to
+  exploit the new constraint, or the harness won't detect the added skill.
+- **Depends on:** B (chain scoring, done). Independent of the sound work above.
