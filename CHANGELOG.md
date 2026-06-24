@@ -5,6 +5,17 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.17.1] - 2026-06-24
+
+### Changed
+- **Watch the active player inline instead of in a modal.** The spectator no
+  longer pops a full-screen card that buried the live action. While it isn't your
+  turn, your central board now shows the active player's window filling in live,
+  so their drawn shards (the kiln), crack risk, banked spectrum bonus, and every
+  score in the top strip all stay visible at once. Reverts to your own board on
+  your turn. The eye toggle (👁️) is now always reachable, and tapping a player
+  chip still opens the detailed peek card on demand.
+
 ## [1.17.0] - 2026-06-24
 
 ### Added
