@@ -377,9 +377,9 @@ function processEvents(events) {
         break;
       case 'score': {
         const what = ev.reason === 'socket' ? 'socket matched'
-          : ev.reason === 'row' ? 'row complete'
+          : ev.reason === 'chain' ? 'bright line'
           : ev.reason === 'diagonal' ? 'diagonal complete'
-          : 'column complete';
+          : 'scored';
         toast(`+${ev.points} ${what} — ${g.players[ev.seat].name}`);
         break;
       }

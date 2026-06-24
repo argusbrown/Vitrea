@@ -5,6 +5,18 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.16.0] - 2026-06-24
+
+### Changed
+- Placing a shard now scores the length of the contiguous run it joins
+  (Azul-style "chain scoring") instead of a flat 1 point: a shard at the
+  junction of a horizontal and vertical line scores both runs. Where you place
+  finally matters — building and connecting lines is now the core placement
+  skill, not just finding any legal cell.
+- Removed the separate full-row and full-column bonuses; the run already pays
+  out for completing a line, so the old bonuses double-counted. A long line is
+  announced as a "bright line" with the scoring flourish.
+
 ## [1.15.0] - 2026-06-24
 
 ### Changed

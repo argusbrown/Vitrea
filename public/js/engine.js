@@ -23,12 +23,20 @@ const SPECTRUM_SIZE = 6;   // a Perfect Spectrum = holding all six colours at on
 // Keyed by exact colour count; counts below 4 earn nothing.
 const SPECTRUM_TIERS = { 4: 3, 5: 6, 6: 12 };
 const MATCH_BONUS = 3;
-const ROW_BONUS = 5;       // a row holds COLS shards
-const COL_BONUS = 6;       // a column holds ROWS shards
+// Full rows/columns are no longer scored separately — CHAIN_SCORING rewards the
+// contiguous run a placement joins, which already pays out for filling a line.
 const DIAG_BONUS = 8;      // a full, single-colour main/anti diagonal (square board only)
 const FINISH_BONUS = 10;
 const DISCARD_PENALTY = 1; // points lost per shard deliberately discarded
 const MAX_ROUNDS = 30;
+
+// Chain scoring (Azul-style): when true, a placed shard scores the length of the
+// contiguous horizontal + vertical runs of filled cells it joins (both runs only
+// if it sits at an intersection; otherwise the longer single run; a shard with no
+// filled orthogonal neighbour scores 1). This makes WHERE you place matter —
+// extending lines and landing on junctions — instead of a flat +1 per shard.
+// When false, every placement scores a flat 1 (the original rule).
+const CHAIN_SCORING = true;
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -232,6 +240,20 @@ class Game {
     return true;
   }
 
+  // Points for the shard just placed at (r,c) — the cell is already filled.
+  // With CHAIN_SCORING off this is a flat 1; on, it is the Azul-style run score:
+  // the length of the contiguous horizontal and/or vertical lines it belongs to.
+  placementPoints(p, r, c) {
+    if (!CHAIN_SCORING) return 1;
+    let h = 1;
+    for (let cc = c - 1; cc >= 0 && p.window[r][cc] !== null; cc--) h++;
+    for (let cc = c + 1; cc < COLS && p.window[r][cc] !== null; cc++) h++;
+    let v = 1;
+    for (let rr = r - 1; rr >= 0 && p.window[rr][c] !== null; rr--) v++;
+    for (let rr = r + 1; rr < ROWS && p.window[rr][c] !== null; rr++) v++;
+    return (h > 1 && v > 1) ? h + v : Math.max(h, v);
+  }
+
   place(playerId, handIndex, r, c) {
     const p = this.assertTurn(playerId, 'place');
     if (handIndex < 0 || handIndex >= this.hand.length) throw new Error('Invalid shard.');
@@ -240,20 +262,18 @@ class Game {
 
     this.hand.splice(handIndex, 1);
     p.window[r][c] = shard;
-    p.score += 1;
+    const linePts = this.placementPoints(p, r, c);
+    p.score += linePts;
+    // A long run is its own reward now (chain scoring replaced the flat row/column
+    // bonuses). Toast the notable ones so a well-placed shard still feels good.
+    if (linePts >= 4) {
+      this.emit('score', { seat: p.seat, points: linePts, reason: 'chain' });
+    }
 
     const socket = p.sockets[`${r},${c}`];
     if (socket && (shard === PRISM || shard === socket)) {
       p.score += MATCH_BONUS;
       this.emit('score', { seat: p.seat, points: MATCH_BONUS, reason: 'socket' });
-    }
-    if (p.window[r].every((cell) => cell !== null)) {
-      p.score += ROW_BONUS;
-      this.emit('score', { seat: p.seat, points: ROW_BONUS, reason: 'row' });
-    }
-    if (p.window.every((row) => row[c] !== null)) {
-      p.score += COL_BONUS;
-      this.emit('score', { seat: p.seat, points: COL_BONUS, reason: 'column' });
     }
     // Diagonals only make sense on a square window. A diagonal scores only when
     // it is full AND every tile is the same colour; a prism is wild and matches
@@ -397,8 +417,7 @@ class Game {
         spectrumSize: SPECTRUM_SIZE,
         spectrumTiers: SPECTRUM_TIERS,
         matchBonus: MATCH_BONUS,
-        rowBonus: ROW_BONUS,
-        colBonus: COL_BONUS,
+        chainScoring: CHAIN_SCORING,
         diagBonus: DIAG_BONUS,
         finishBonus: FINISH_BONUS,
         discardPenalty: DISCARD_PENALTY,
