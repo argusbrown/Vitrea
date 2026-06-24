@@ -10,6 +10,7 @@ const $ = (sel) => document.querySelector(sel);
 
 const SESSION_KEY = 'vitrea-session'; // {role, code, token}
 const NAME_KEY = 'vitrea-name';
+const SPECTATE_KEY = 'vitrea-spectate'; // '0' disables auto-watch; default on
 
 const ui = {
   home: $('#screen-home'),
@@ -29,6 +30,9 @@ const state = {
   prevHand: [], // hand before the latest snapshot, for the shatter animation
   bustFreeze: false, // keep the shattering hand on screen briefly
   busyConnecting: false,
+  spectate: localStorage.getItem(SPECTATE_KEY) !== '0', // auto-watch the active player (default on)
+  peekId: null, // player id currently shown in the peek overlay (null = closed)
+  peekFollow: false, // true when the open peek is auto-following the active player
 };
 
 /* ---------------- session ---------------- */
@@ -755,6 +759,24 @@ function renderGame() {
     : g.finishTriggered
       ? 'final turns — make them count'
       : 'your window';
+
+  // --- live peek / auto-watch ---
+  // Auto-watch follows the active player while it isn't our turn; it closes on
+  // our turn so the kiln and our own board stay clear. Any open peek (manual or
+  // following) re-renders from this snapshot so the watched board/score is live.
+  if (state.spectate && !myTurn && g.phase === 'playing' && active && !active.finished) {
+    if (state.peekId == null) openPeek(active, rules, { follow: true });
+  } else if (state.peekFollow) {
+    $('#overlay-peek').hidden = true; // auto-close the follow view (don't disable the toggle)
+    state.peekId = null;
+    state.peekFollow = false;
+  }
+  if (state.peekId != null && !$('#overlay-peek').hidden) {
+    if (state.peekFollow && active) state.peekId = active.id; // keep following turn changes
+    const watched = g.players.find((p) => p.id === state.peekId);
+    if (watched) renderPeek(watched, rules);
+  }
+  updateSpectateUI();
 }
 
 // Game-screen exit: the host ends the game for everyone, a guest just leaves.
@@ -778,7 +800,21 @@ function openQuit() {
   $('#overlay-quit').hidden = false;
 }
 
-function openPeek(gamePlayer, rules) {
+// Open the peek overlay on a player. `follow:true` marks it as the auto-watch
+// view that tracks whoever is active; a chip tap opens a manual (non-following)
+// peek. Either way the content is re-rendered live from each snapshot via
+// renderPeek() while the overlay stays open (state.peekId is set).
+function openPeek(gamePlayer, rules, { follow = false } = {}) {
+  state.peekId = gamePlayer.id;
+  state.peekFollow = follow;
+  renderPeek(gamePlayer, rules);
+  $('#overlay-peek').hidden = false;
+}
+
+// Paint the peek overlay's contents (window + score + breakdown) for the given
+// player. Called by openPeek and again from renderGame on every snapshot so the
+// board and score update live as that player draws and places.
+function renderPeek(gamePlayer, rules) {
   $('#peek-title').textContent =
     gamePlayer.id === state.you.id ? 'Your window' : `${gamePlayer.name}'s window`;
   const mount = $('#peek-window');
@@ -796,7 +832,19 @@ function openPeek(gamePlayer, rules) {
     `${gamePlayer.discards} discard${gamePlayer.discards === 1 ? '' : 's'}`,
   ];
   $('#peek-breakdown').textContent = parts.join(' · ');
-  $('#overlay-peek').hidden = false;
+}
+
+// Close the peek overlay. A manual close turns auto-watch off entirely (the
+// user's chosen behaviour) — it stays off until re-enabled via the eye toggle.
+function closePeek() {
+  $('#overlay-peek').hidden = true;
+  state.peekId = null;
+  state.peekFollow = false;
+  if (state.spectate) {
+    state.spectate = false;
+    localStorage.setItem(SPECTATE_KEY, '0');
+    updateSpectateUI();
+  }
 }
 
 function renderEnd() {
@@ -943,6 +991,21 @@ function setup() {
   });
   updateMuteUI();
 
+  // Auto-watch toggle — re-enabling immediately picks up the active player on
+  // the next render; disabling closes any follow view.
+  $('#btn-game-spectate').addEventListener('click', () => {
+    state.spectate = !state.spectate;
+    localStorage.setItem(SPECTATE_KEY, state.spectate ? '1' : '0');
+    if (!state.spectate && state.peekFollow) {
+      $('#overlay-peek').hidden = true;
+      state.peekId = null;
+      state.peekFollow = false;
+    }
+    updateSpectateUI();
+    render();
+  });
+  updateSpectateUI();
+
   // Arm audio on the first gesture anywhere — covers an auto-rejoined player
   // who lands mid-game without tapping Host/Join/mute. iOS needs a gesture.
   const armAudio = () => {
@@ -953,7 +1016,12 @@ function setup() {
 
   document.querySelectorAll('.overlay').forEach((overlay) => {
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay || e.target.closest('[data-close]')) overlay.hidden = true;
+      if (e.target === overlay || e.target.closest('[data-close]')) {
+        // The peek overlay routes through closePeek so a manual close also
+        // turns auto-watch off; other overlays just hide.
+        if (overlay.id === 'overlay-peek') closePeek();
+        else overlay.hidden = true;
+      }
     });
   });
 
@@ -969,6 +1037,15 @@ function updateMuteUI() {
     game.textContent = m ? '🔇' : '🔊';
     game.setAttribute('aria-pressed', String(m));
   }
+}
+
+function updateSpectateUI() {
+  const b = $('#btn-game-spectate');
+  if (!b) return;
+  b.textContent = state.spectate ? '👁️' : '🚫';
+  b.classList.toggle('off', !state.spectate);
+  b.setAttribute('aria-pressed', String(state.spectate));
+  b.setAttribute('title', state.spectate ? 'Auto-watch on' : 'Auto-watch off');
 }
 
 setup();

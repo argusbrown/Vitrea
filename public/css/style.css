@@ -118,6 +118,7 @@ h1, h2, h3, .btn, .room-code { font-family: var(--serif); }
   font-weight: 700;
   cursor: pointer;
 }
+.icon-btn.off { opacity: 0.45; border-color: var(--panel); }
 
 /* ============================================================
    HOME
