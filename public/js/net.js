@@ -23,6 +23,12 @@ const VitreaNet = (() => {
     return Array.from({ length: 4 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
   }
 
+  // Fair coin for who takes the first turn — otherwise the host (seat 0) always
+  // opens and, in turn order, the previous seat would always go last.
+  function randomSeat(playerCount) {
+    return Math.floor(Math.random() * playerCount);
+  }
+
   function randomId(bytes = 16) {
     if (crypto.randomUUID) return crypto.randomUUID();
     const a = new Uint8Array(bytes);
@@ -207,7 +213,7 @@ const VitreaNet = (() => {
           if (this.phase !== 'lobby' || playerId !== this.hostId) return;
           if (this.players.length < 2) return client.send({ type: 'error', message: 'You need at least 2 players.' });
           this.phase = 'playing';
-          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })));
+          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })), randomSeat(this.players.length));
           this.broadcast();
           break;
         }
@@ -254,7 +260,7 @@ const VitreaNet = (() => {
         case 'playAgain': {
           if (this.phase !== 'finished' || playerId !== this.hostId) return;
           this.phase = 'playing';
-          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })));
+          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })), randomSeat(this.players.length));
           this.broadcast();
           break;
         }

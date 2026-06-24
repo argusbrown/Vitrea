@@ -85,6 +85,20 @@ function playRandomGame(numPlayers, seedTag) {
   assert(threw, 'off-turn draw rejected');
 }
 
+// starting seat: defaults to 0, but can be set (and wraps into range), and the
+// whole rotation follows from it — so the opener isn't forced to be seat 0.
+{
+  const trio = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }];
+  assert(new Game(trio).turnSeat === 0, 'default opener is seat 0');
+  const g = new Game(trio, 1);
+  assert(g.turnSeat === 1 && g.firstSeat === 1, 'explicit start seat opens the game');
+  assert(new Game(trio, 3).turnSeat === 0, 'start seat wraps into range');
+  // round-robin from seat 1: 1 -> 2 -> 0, so seat 0 opens last, not first.
+  const order = [g.turnSeat];
+  for (let i = 0; i < 3; i++) { g.stop(g.current().id); order.push(g.turnSeat); }
+  assert(JSON.stringify(order) === JSON.stringify([1, 2, 0, 1]), `rotation follows the opener (got ${order})`);
+}
+
 // bust mechanics: force a duplicate
 {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);

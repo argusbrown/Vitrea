@@ -69,7 +69,10 @@ function makePattern() {
 }
 
 class Game {
-  constructor(playerInfos) {
+  // startSeat picks who takes the first turn (and thus the whole rotation
+  // order). It defaults to 0 so tests and replays stay deterministic; live
+  // games pass a random seat so the host isn't always first.
+  constructor(playerInfos, startSeat = 0) {
     this.bag = freshBag();
     this.discardPile = [];
     this.players = playerInfos.map((p, seat) => ({
@@ -86,7 +89,9 @@ class Game {
       finished: false,
     }));
     this.phase = 'playing'; // 'playing' | 'finished'
-    this.turnSeat = 0;
+    const n = this.players.length;
+    this.turnSeat = ((startSeat % n) + n) % n; // wrap defensively into range
+    this.firstSeat = this.turnSeat; // who opened the game (for the UI/log)
     this.turnPhase = 'draw'; // 'draw' | 'place'
     this.hand = []; // shards drawn this turn
     this.round = 1;
@@ -324,6 +329,7 @@ class Game {
       players: this.players,
       phase: this.phase,
       turnSeat: this.turnSeat,
+      firstSeat: this.firstSeat,
       turnPhase: this.turnPhase,
       hand: this.hand,
       round: this.round,
