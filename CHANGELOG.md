@@ -5,6 +5,17 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.17.0] - 2026-06-24
+
+### Added
+- **Watch the active player live.** While it isn't your turn, a spectator view
+  auto-opens and follows whoever is currently drawing and placing — their window
+  and score update in real time as they press their luck. It closes automatically
+  on your turn so the kiln and your own board stay clear. Tapping any player chip
+  still opens a manual live peek of that player. A new eye toggle (👁️) in the
+  game top bar turns auto-watch on/off (on by default, remembered per device);
+  closing the spectator view also turns it off until you re-enable it.
+
 ## [1.16.3] - 2026-06-24
 
 ### Fixed
