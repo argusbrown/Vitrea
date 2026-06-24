@@ -64,36 +64,42 @@ Joining also reports exactly where it got stuck instead of hanging:
 
 ## How to play
 
-On your turn, draw glass shards from the kiln one at a time. Every draw is
-revealed to all players.
+On your turn, draw glass shards from the kiln one at a time. Every shard is
+revealed to all.
 
-- **Crack!** Draw a colour you already drew this turn and your glass shatters —
+- **Crack!** Draw a colour you already hold this turn and your glass shatters —
   you lose every shard you drew and your turn ends.
-- **Prism shield.** A **prism** is wild — it never clashes, so you can stockpile
-  prisms, and if you draw a colour you already hold you may spend one to absorb
-  the clash instead of cracking. When placed, a prism may sit anywhere.
-- **Stop in time** and you set each shard into your window. The same colour may
-  never touch side-by-side.
-- **Chase the spectrum.** The more distinct colours you bank in one turn, the
-  bigger the bonus — **+3 / +6 / +12** for 4 / 5 / all 6 colours — so pushing
-  pays even short of the full set. Holding all six is a **Perfect Spectrum**,
-  scored the instant you draw the sixth.
-- **Discarding costs you.** A shard with no legal cell (or one you don't want)
-  may be discarded, but each discard costs **−1** point.
+- **Prism shield.** A **prism** is a wild. If you draw a colour you already hold
+  but have a prism in hand, the prism is spent to absorb the clash instead of
+  cracking — you keep going, minus one prism. Prisms never clash with each other,
+  so you can stockpile shields.
+- **Chase the spectrum.** Bank four or more distinct colours in a single turn for
+  a bonus — the more you hold, the bigger it gets. Holding all six at once is a
+  **Perfect Spectrum**, scored the instant you draw the sixth (prisms help you
+  survive the clashes on the way there).
+- **Know when to stop.** Stop before you crack and you keep every shard you drew —
+  then set them into your 5×5 window. Touching shards may never share a colour (a
+  prism sits anywhere), so a line of glass is always a mix of colours.
+- **Build bright lines.** Each shard scores the length of the unbroken line it
+  extends — both directions where a row and a column cross. A lone shard scores 1,
+  so build long, connected lines.
+- **Discarding costs you.** If a shard has no legal cell — or you simply don't
+  want it — you may discard it, but each discarded shard costs **−1** point. Place
+  when you can; throw glass away only when you must.
 
 ### Scoring
 
 | | |
 |---|---|
-| set a shard in your window | **+ the length of the contiguous row/column run it joins** (both, if it lands at a junction) |
+| set a shard in your window | **+ line length** — the unbroken line it extends, both directions where a row and column cross |
 | socket filled with its matching colour | **+3** |
-| completed single-colour diagonal (prism is wild) | **+8** |
+| completed single-colour diagonal, either corner-to-corner (prism is wild) | **+8** |
 | bank 4 / 5 / all 6 colours in a turn (6 = Perfect Spectrum) | **+3 / +6 / +12** |
 | first to finish their window | **+10** |
 | each shard discarded | **−1** |
 
-When someone completes their window, the round is played out so everyone has
-had equal turns — then the brightest window wins.
+When someone completes their window, the round is played out so all have had
+equal turns — then the brightest window wins.
 
 ## Code layout
 
