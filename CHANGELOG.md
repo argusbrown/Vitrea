@@ -5,6 +5,14 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.15.0] - 2026-06-24
+
+### Changed
+- The first turn no longer always goes to the host. A fresh game now picks a
+  random player to go first, and each rematch ("Play again") rotates the lead
+  one seat onward, so it passes around the table over a series. A "✦ X goes
+  first" banner (with a sound flourish) announces who starts.
+
 ## [1.14.1] - 2026-06-16
 
 ### Added
