@@ -72,7 +72,11 @@ function makePattern() {
 }
 
 class Game {
-  constructor(playerInfos) {
+  // opts.startSeat picks who takes the first turn (default seat 0). The Room
+  // supplies it — random for a fresh game, rotated by one on each rematch — so
+  // the engine itself stays deterministic and testable. Out-of-range falls back
+  // to seat 0.
+  constructor(playerInfos, opts = {}) {
     this.bag = freshBag();
     this.discardPile = [];
     this.players = playerInfos.map((p, seat) => ({
@@ -88,14 +92,19 @@ class Game {
       diagScored: 0,
       finished: false,
     }));
+    const n = this.players.length;
+    let startSeat = opts.startSeat;
+    if (!Number.isInteger(startSeat) || startSeat < 0 || startSeat >= n) startSeat = 0;
+    this.startSeat = startSeat;
     this.phase = 'playing'; // 'playing' | 'finished'
-    this.turnSeat = 0;
+    this.turnSeat = startSeat;
     this.turnPhase = 'draw'; // 'draw' | 'place'
     this.hand = []; // shards drawn this turn
     this.round = 1;
     this.finishTriggered = false;
     this.events = [];
     this.eventSeq = 0;
+    this.emit('firstPlayer', { seat: startSeat, name: this.players[startSeat].name });
   }
 
   emit(type, data = {}) {
@@ -335,6 +344,7 @@ class Game {
       discardPile: this.discardPile,
       players: this.players,
       phase: this.phase,
+      startSeat: this.startSeat,
       turnSeat: this.turnSeat,
       turnPhase: this.turnPhase,
       hand: this.hand,

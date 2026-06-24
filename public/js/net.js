@@ -207,7 +207,9 @@ const VitreaNet = (() => {
           if (this.phase !== 'lobby' || playerId !== this.hostId) return;
           if (this.players.length < 2) return client.send({ type: 'error', message: 'You need at least 2 players.' });
           this.phase = 'playing';
-          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })));
+          // Fresh game: a random player takes the first turn (not always the host).
+          const startSeat = Math.floor(Math.random() * this.players.length);
+          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })), { startSeat });
           this.broadcast();
           break;
         }
@@ -254,7 +256,12 @@ const VitreaNet = (() => {
         case 'playAgain': {
           if (this.phase !== 'finished' || playerId !== this.hostId) return;
           this.phase = 'playing';
-          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })));
+          // Rematch: rotate the first turn one seat past whoever started last game,
+          // so the lead passes around the table across a series.
+          const n = this.players.length;
+          const prevStart = (this.game && Number.isInteger(this.game.startSeat)) ? this.game.startSeat : 0;
+          const nextStart = (prevStart + 1) % n;
+          this.game = new Game(this.players.map((p) => ({ id: p.id, name: p.name })), { startSeat: nextStart });
           this.broadcast();
           break;
         }

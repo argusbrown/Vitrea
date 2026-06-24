@@ -173,8 +173,18 @@ function applyState(room) {
 
   if (room.game) {
     const maxSeq = room.game.events.reduce((m, ev) => Math.max(m, ev.seq), 0);
-    if (state.firstSnapshot || maxSeq < state.lastSeq) {
-      state.lastSeq = maxSeq; // joined mid-game or a fresh game began
+    if (state.firstSnapshot) {
+      state.lastSeq = maxSeq; // joined mid-game: adopt history silently
+    } else if (maxSeq < state.lastSeq) {
+      // A new Game replaced the previous one (rematch). Announce its opening
+      // events — chiefly "X goes first" — but only when we're seeing the true
+      // start (the seq-1 event hasn't been trimmed). A client reconnecting into
+      // a rematch already in progress finds it gone and adopts history silently.
+      state.lastSeq = 0;
+      if (room.game.events.some((ev) => ev.seq === 1)) {
+        processEvents(room.game.events.filter((ev) => ev.seq > 0));
+      }
+      state.lastSeq = maxSeq;
     } else {
       processEvents(room.game.events.filter((ev) => ev.seq > state.lastSeq));
       state.lastSeq = maxSeq;
@@ -379,6 +389,11 @@ function processEvents(events) {
       case 'finish':
         banner(`${mine ? 'You' : ev.name} finished! +${ev.points}`, 'b-gold');
         toast('Final turns — the round plays out');
+        break;
+      case 'firstPlayer':
+        banner(`${mine ? 'You go' : ev.name + ' goes'} first`, 'b-gold');
+        if (mine) vibrate(40);
+        else toast(`${ev.name} goes first`);
         break;
       case 'turn':
         if (mine) {

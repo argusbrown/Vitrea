@@ -285,6 +285,23 @@ function diagEventsForBoth(centerShard, sameColour) {
   assert(revived.turnPhase === 'place' || revived.turnSeat === 1, 'revived game playable');
 }
 
+// startSeat picks who goes first, announces it, and survives a round-trip
+{
+  const infos = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }];
+  const g = new Game(infos, { startSeat: 2 });
+  assert(g.turnSeat === 2 && g.startSeat === 2, 'startSeat seats the first turn');
+  assert(g.current().id === 'c', 'startSeat current() is the chosen player');
+  const fp = g.events.find((e) => e.type === 'firstPlayer');
+  assert(fp && fp.seat === 2 && fp.name === 'C', 'firstPlayer event announces the starter');
+  const revived = Game.fromJSON(JSON.parse(JSON.stringify(g.toJSON())));
+  assert(revived.startSeat === 2 && revived.turnSeat === 2, 'startSeat survives serialization');
+
+  // default + out-of-range fall back to seat 0
+  assert(new Game(infos).startSeat === 0, 'default startSeat is seat 0');
+  assert(new Game(infos, { startSeat: 9 }).startSeat === 0, 'out-of-range startSeat falls back to 0');
+  assert(new Game(infos, { startSeat: -1 }).startSeat === 0, 'negative startSeat falls back to 0');
+}
+
 // --- monte carlo -----------------------------------------------------------
 
 let totalRounds = 0;

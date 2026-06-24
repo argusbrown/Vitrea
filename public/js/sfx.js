@@ -57,6 +57,8 @@ const SOUND_MAP = {
   shield:   { kind: 'chime', partials: GLASS, base: 550, dur: 0.7, attack: 0.004 },
   finish:   { kind: 'chime', partials: GLASS, base: 740, dur: 1.0, attack: 0.004 },
   turn:     { kind: 'chime', partials: GLASS, base: 520, dur: 0.6, attack: 0.004, mineOnly: true },
+  // who-goes-first reveal at game start: a brighter two-note flourish for everyone.
+  firstPlayer: { kind: 'chime', partials: GLASS, base: 587, dur: 0.9, attack: 0.004, seq: [{ m: 1, t: 0 }, { m: 1.5, t: 0.12 }] },
   discard:  { kind: 'chime', partials: DULL,  base: 240, dur: 0.4, attack: 0.004 },
   skipped:  { kind: 'chime', partials: DULL,  base: 200, dur: 0.4, attack: 0.004 },
   pass:     { kind: 'chime', partials: DULL,  base: 280, dur: 0.35, attack: 0.004 },
