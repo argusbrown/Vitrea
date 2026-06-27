@@ -11,6 +11,10 @@ const $ = (sel) => document.querySelector(sel);
 const SESSION_KEY = 'vitrea-session'; // {role, code, token}
 const NAME_KEY = 'vitrea-name';
 const SPECTATE_KEY = 'vitrea-spectate'; // '0' disables auto-watch; default on
+const WATCH_LINGER_MS = 500; // how long the auto-watched board lingers on the
+// player who just acted before jumping to the next one — long enough to see
+// their final placement (the turn-advancing snapshot already names the next
+// player, so without this the board would switch the instant they finish).
 
 const ui = {
   home: $('#screen-home'),
@@ -32,6 +36,9 @@ const state = {
   busyConnecting: false,
   spectate: localStorage.getItem(SPECTATE_KEY) !== '0', // auto-watch active player on the central board (default on)
   peekId: null, // player id shown in the chip-tap peek overlay (null = closed)
+  watchId: null, // player id the central board is auto-watching (null = own board)
+  watchPending: false, // true while lingering on the player who just acted
+  watchTimer: null, // pending linger timeout
 };
 
 /* ---------------- session ---------------- */
@@ -224,6 +231,14 @@ function myTurnPlacing() {
 }
 function amHost() {
   return !!(state.room && state.you && state.room.hostId === state.you.id);
+}
+// Which player the central board should auto-watch right now, ignoring the
+// linger (null = show your own board). Recomputed fresh when a linger expires.
+function currentWatchTarget() {
+  const g = game();
+  if (!g || g.phase !== 'playing' || !state.spectate || isMyTurn()) return null;
+  const a = activePlayer();
+  return a && !a.finished ? a.id : null;
 }
 function colorName(shard) {
   return shard.charAt(0).toUpperCase() + shard.slice(1);
@@ -753,12 +768,28 @@ function renderGame() {
   // their drawn shards, crack risk and banked bonus, and the strip shows every
   // score, so the whole turn stays visible (no modal burying it). Reverts to my
   // board on my turn. The chip-tap peek modal is separate and unaffected.
-  const watching =
-    state.spectate && !myTurn && g.phase === 'playing' && active && !active.finished
-      ? active
-      : null;
+  //
+  // When the turn passes, linger on the player who just acted for a beat before
+  // following the next one: the turn-advancing snapshot already names the next
+  // player, so watchers would otherwise never see the final placement land.
+  const wantId = currentWatchTarget();
+  if (!state.watchPending && wantId !== state.watchId) {
+    if (state.watchId != null && g.players.some((p) => p.id === state.watchId)) {
+      state.watchPending = true;
+      clearTimeout(state.watchTimer);
+      state.watchTimer = setTimeout(() => {
+        state.watchPending = false;
+        state.watchId = currentWatchTarget();
+        render();
+      }, WATCH_LINGER_MS);
+    } else {
+      state.watchId = wantId; // first watch (or back to own board) — no linger
+    }
+  }
+  const watching = state.watchId != null ? g.players.find((p) => p.id === state.watchId) : null;
   const mount = $('#my-window');
-  const fresh = windowEl(watching || my, rules, { interactive: myTurnPlacing() });
+  // Only the real own-board view is interactive — never a lingered/watched one.
+  const fresh = windowEl(watching || my, rules, { interactive: !watching && myTurnPlacing() });
   fresh.id = 'my-window';
   mount.replaceWith(fresh);
 
