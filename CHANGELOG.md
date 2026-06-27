@@ -5,6 +5,15 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.17.2] - 2026-06-27
+
+### Fixed
+- **Auto-watch now lingers on the player who just acted.** When a watched player
+  placed their final shard the central board jumped to the next player instantly
+  (the turn-advancing snapshot already names them), so watchers never saw the
+  move land. The board now holds on the player who just finished for half a
+  second before following the next one.
+
 ## [1.17.1] - 2026-06-24
 
 ### Changed
