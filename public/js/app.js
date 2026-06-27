@@ -37,7 +37,7 @@ const state = {
   spectate: localStorage.getItem(SPECTATE_KEY) !== '0', // auto-watch active player on the central board (default on)
   peekId: null, // player id shown in the chip-tap peek overlay (null = closed)
   watchId: null, // player id the central board is auto-watching (null = own board)
-  watchPending: false, // true while lingering on the player who just acted
+  watchNext: false, // target we're lingering toward (id, or null for own board; false = no linger)
   watchTimer: null, // pending linger timeout
 };
 
@@ -772,19 +772,33 @@ function renderGame() {
   // When the turn passes, linger on the player who just acted for a beat before
   // following the next one: the turn-advancing snapshot already names the next
   // player, so watchers would otherwise never see the final placement land.
+  //
+  // `watchId` is who the board shows now; `watchNext` is who we're easing toward
+  // (false = nothing pending). We only delay when leaving an opponent we were
+  // already watching — adopting a first watch, or reverting to our own board, is
+  // instant. Re-arming on every hand-off (and retargeting an in-flight linger)
+  // keeps it working turn after turn, even when turns come faster than the delay.
   const wantId = currentWatchTarget();
-  if (!state.watchPending && wantId !== state.watchId) {
-    if (state.watchId != null && g.players.some((p) => p.id === state.watchId)) {
-      state.watchPending = true;
+  if (state.watchId == null || !g.players.some((p) => p.id === state.watchId)) {
+    // Showing our own board, or the watched player vanished — adopt instantly.
+    state.watchId = wantId;
+    state.watchNext = false;
+    clearTimeout(state.watchTimer);
+  } else if (wantId !== state.watchId) {
+    // The turn moved off the player we're showing — linger, then follow.
+    if (state.watchNext !== wantId) {
+      state.watchNext = wantId;
       clearTimeout(state.watchTimer);
       state.watchTimer = setTimeout(() => {
-        state.watchPending = false;
-        state.watchId = currentWatchTarget();
+        state.watchId = state.watchNext;
+        state.watchNext = false;
         render();
       }, WATCH_LINGER_MS);
-    } else {
-      state.watchId = wantId; // first watch (or back to own board) — no linger
     }
+  } else if (state.watchNext !== false) {
+    // We're already showing the wanted player — drop any stale pending linger.
+    state.watchNext = false;
+    clearTimeout(state.watchTimer);
   }
   const watching = state.watchId != null ? g.players.find((p) => p.id === state.watchId) : null;
   const mount = $('#my-window');
