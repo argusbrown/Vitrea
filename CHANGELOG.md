@@ -5,6 +5,15 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.17.3] - 2026-06-27
+
+### Fixed
+- **The auto-watch linger now works on every turn, not just the first.** 1.17.2's
+  linger froze on a single in-flight flag, so once turns came faster than the
+  half-second delay the board stopped pausing and could even show the wrong
+  player. It now tracks the player it's easing toward and re-arms on every
+  hand-off, so each player's final placement gets its beat on screen all game.
+
 ## [1.17.2] - 2026-06-27
 
 ### Fixed
