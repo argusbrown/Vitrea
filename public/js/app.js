@@ -964,6 +964,18 @@ function setupHome() {
 function resumeIfPossible() {
   const session = loadSession();
   if (!session) return;
+
+  // An explicit join link (?room=…, e.g. a scanned QR code) means the player
+  // wants a *specific* game. That intent beats auto-resuming a prior session —
+  // otherwise a host who never left their own game would have it resurrected
+  // here instead of joining the new room. Only auto-resume when the link points
+  // at the very game we'd resume into (a guest reloading their own join page).
+  const roomFromUrl = (new URLSearchParams(location.search).get('room') || '')
+    .toUpperCase().trim();
+  if (roomFromUrl && !(session.role === 'guest' && session.code === roomFromUrl)) {
+    return;
+  }
+
   if (session.role === 'host') {
     const saved = VitreaNet.savedHostRoom();
     if (saved && saved.code === session.code) {
