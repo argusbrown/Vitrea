@@ -5,6 +5,15 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.17.4] - 2026-06-27
+
+### Fixed
+- **A scanned join link now wins over your last game.** If you hosted a game and
+  never left it, opening another game's QR code (or join link) used to resurrect
+  your own hosted room instead of joining the new one. An explicit `?room=…` link
+  now takes precedence over auto-resuming a prior session — the only time it
+  still auto-resumes is a guest reloading their own join page.
+
 ## [1.17.3] - 2026-06-27
 
 ### Fixed
