@@ -11,7 +11,7 @@ const $ = (sel) => document.querySelector(sel);
 const SESSION_KEY = 'vitrea-session'; // {role, code, token}
 const NAME_KEY = 'vitrea-name';
 const SPECTATE_KEY = 'vitrea-spectate'; // '0' disables auto-watch; default on
-const WATCH_LINGER_MS = 500; // how long the auto-watched board lingers on the
+const WATCH_LINGER_MS = 750; // how long the auto-watched board lingers on the
 // player who just acted before jumping to the next one — long enough to see
 // their final placement (the turn-advancing snapshot already names the next
 // player, so without this the board would switch the instant they finish).
@@ -416,8 +416,8 @@ function processEvents(events) {
         break;
       case 'turn':
         if (mine) {
-          banner('Your turn', 'b-gold');
-          vibrate(40);
+          flashTurn(); // pulse the top kiln ("Your turn — draw…") instead of a
+          vibrate(40); // center banner that would cover the now-visible board
         }
         break;
       case 'skipped':
@@ -443,6 +443,19 @@ function playBustAnimation() {
     state.bustFreeze = false;
     render();
   }, 750);
+}
+
+// It's your turn: pulse the kiln at the top (which now reads "Your turn — draw
+// from the kiln") rather than flashing a full-screen banner over the board —
+// the board is visible while auto-watching, and a center banner would cover it.
+function flashTurn() {
+  const k = $('#kiln');
+  if (!k) return;
+  k.classList.remove('turn-pulse');
+  void k.offsetWidth; // restart the animation if turns come back-to-back
+  k.classList.add('turn-pulse');
+  clearTimeout(flashTurn._t);
+  flashTurn._t = setTimeout(() => k.classList.remove('turn-pulse'), 1200);
 }
 
 function banner(text, cls) {

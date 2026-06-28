@@ -5,6 +5,16 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.17.5] - 2026-06-28
+
+### Changed
+- **"Your turn" no longer covers the board.** Now that the board stays visible
+  while auto-watching, the full-screen "Your turn" banner was hiding it. Your
+  turn is now signalled by a brief gold pulse on the kiln at the top (which
+  already reads "Your turn — draw from the kiln"), plus the usual haptic buzz.
+- Lengthened the auto-watch linger to 750ms (from 500ms) so the player who just
+  acted stays on screen a touch longer before the board follows the next turn.
+
 ## [1.17.4] - 2026-06-27
 
 ### Fixed
