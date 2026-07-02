@@ -370,9 +370,9 @@ function processEvents(events) {
     switch (ev.type) {
       case 'bust':
         playBustAnimation();
-        banner('Crack!', 'b-crack');
+        banner(ev.points ? `Crack! −${ev.points}` : 'Crack!', 'b-crack');
         vibrate([60, 40, 120]);
-        if (!mine) toast(`${ev.name}'s glass shattered`);
+        if (!mine) toast(`${ev.name}'s glass shattered${ev.points ? ` (−${ev.points})` : ''}`);
         break;
       case 'spectrum':
         banner('Perfect Spectrum +' + ev.points, 'b-spectrum');
