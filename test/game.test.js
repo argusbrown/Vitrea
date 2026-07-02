@@ -88,13 +88,60 @@ function playRandomGame(numPlayers, seedTag) {
 // bust mechanics: force a duplicate
 {
   const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  const penalty = g.snapshot().rules.bustPenalty;
   g.hand = ['ruby'];
   g.bag.push('ruby'); // next pop is ruby -> bust
   g.draw('a');
   assert(g.hand.length === 0, 'bust clears hand');
   assert(g.turnSeat === 1, 'bust passes turn');
   assert(g.players[0].busts === 1, 'bust counted');
-  assert(g.events.some((e) => e.type === 'bust'), 'bust event emitted');
+  assert(g.players[0].score === -penalty, `bust costs ${penalty} points (got ${g.players[0].score})`);
+  const bustEv = g.events.find((e) => e.type === 'bust');
+  assert(bustEv && bustEv.points === penalty, 'bust event carries the penalty');
+}
+
+// chain scoring is capped: a junction never pays more than CHAIN_CAP
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  const p = g.players[0];
+  p.sockets = {};
+  g.turnPhase = 'place';
+  // full row arm + full column arm meeting at (0,4): uncapped h+v would be 10
+  for (let c = 0; c < 4; c++) p.window[0][c] = PRISM;
+  for (let r = 1; r < 5; r++) p.window[r][4] = PRISM;
+  const cap = g.snapshot().rules.chainCap;
+  const before = p.score;
+  g.hand = ['ruby'];
+  g.place('a', 0, 0, 4);
+  assert(p.score - before === cap, `junction capped at ${cap} (got +${p.score - before})`);
+}
+
+// every player drafts onto the SAME socket pattern
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }]);
+  const first = JSON.stringify(g.players[0].sockets);
+  assert(g.players.every((p) => JSON.stringify(p.sockets) === first), 'sockets identical across players');
+  assert(g.players[0].sockets !== g.players[1].sockets, 'each player still owns a copy');
+  assert(g.snapshot().rules.sharedSockets === true, 'sharedSockets exposed in rules');
+}
+
+// equal turns: when the STARTER (a non-zero seat) finishes, every other seat
+// still gets its equalizing turn before the game ends (the old wrap-at-seat-0
+// logic ended the game immediately).
+{
+  const g = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], { startSeat: 1 });
+  const p = g.players[1];
+  // fill B's window except one cell, then let B (the starter) finish
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) p.window[r][c] = PRISM;
+  p.window[0][0] = null;
+  g.turnPhase = 'place';
+  g.hand = [PRISM];
+  g.place('b', 0, 0, 0);
+  assert(g.finishTriggered, 'finish triggered');
+  assert(g.phase === 'playing', 'game does not end before seat 0 has an equal turn');
+  assert(g.turnSeat === 0, 'seat 0 gets the equalizing turn');
+  g.stop('a'); // seat 0 passes — now the round has truly wrapped
+  assert(g.phase === 'finished', 'game ends once all seats had equal turns');
 }
 
 // discarding a shard costs a point and is tallied

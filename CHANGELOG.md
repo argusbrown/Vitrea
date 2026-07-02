@@ -5,6 +5,43 @@ All notable changes to Vitrea are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions match `public/js/version.js` and `package.json` (`MAJOR.MINOR.PATCH`).
 
+## [1.18.0] - 2026-07-02
+
+### Changed — rebalanced for skill over luck
+
+Simulated head-to-head play (see `test/balance.sim.js`) showed a mirror match —
+the same strategy playing itself — ended in a blowout (margin ≥35% of the mean
+score) **57%** of the time, and the first seat won 56%. Four rule changes bring
+blowouts down to **~27%**, halve the average luck margin, and remove the seat
+bias, while an odds-reading player beats a reckless one *more* often than
+before (87% vs 84%):
+
+- **Cracking now costs 3 points** on top of losing your hand. Busting was the
+  main luck engine: with no point sting, relentless pushing was correct, and
+  whoever cracked less simply won. The sting moves the optimal stopping point
+  earlier — reading the public bag odds and stopping in time is now the core
+  skill — and one hot streak can no longer run away with the game.
+- **Line scoring is capped at 5 points per shard.** Uncapped junctions paid up
+  to 10, so a small tempo lead snowballed late-game. Junction play still pays —
+  it hits the cap sooner — but there are no jackpot cells.
+- **First-to-finish bonus reduced from +10 to +3.** The finisher is already
+  ahead on placements; the fat bonus just compounded a lead.
+- **Everyone drafts onto the same socket pattern.** Private random patterns
+  dealt some players friendlier boards; now a score gap reflects play, not
+  the deal.
+
+### Fixed
+- **Every seat now truly gets equal turns.** The round wrapped at seat 0
+  instead of at the starting seat, so whenever the starter wasn't seat 0 and
+  finished their window first, later seats were robbed of the promised
+  equalizing turn — a hidden first-player advantage worth ~6% win rate.
+
+### Added
+- `test/balance.sim.js` — a balance harness that plays thousands of bot-vs-bot
+  games (mirror matches and skilled-vs-naive) and reports luck margins, blowout
+  rates, seat bias and skill win rates; `--patch` lets you A/B tuning constants
+  without editing the engine.
+
 ## [1.17.5] - 2026-06-28
 
 ### Changed

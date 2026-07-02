@@ -26,7 +26,8 @@ const MATCH_BONUS = 3;
 // Full rows/columns are no longer scored separately — CHAIN_SCORING rewards the
 // contiguous run a placement joins, which already pays out for filling a line.
 const DIAG_BONUS = 8;      // a full, single-colour main/anti diagonal (square board only)
-const FINISH_BONUS = 10;
+const FINISH_BONUS = 3;    // small carrot for finishing first — kept low so the
+                           // race rewards the leader without compounding a lead
 const DISCARD_PENALTY = 1; // points lost per shard deliberately discarded
 const MAX_ROUNDS = 30;
 
@@ -37,6 +38,23 @@ const MAX_ROUNDS = 30;
 // extending lines and landing on junctions — instead of a flat +1 per shard.
 // When false, every placement scores a flat 1 (the original rule).
 const CHAIN_SCORING = true;
+
+// Cap on the points a single placement can score from its runs. Uncapped, a
+// junction late in the game pays up to ROWS+COLS points, so a small tempo lead
+// (or one lucky escape from a crack) snowballs into a blowout. Capping at a
+// full line keeps junction play rewarding without jackpot cells.
+const CHAIN_CAP = 5;
+
+// Every player drafts onto the SAME socket pattern instead of a private random
+// one. Identical boards mean a score gap reflects play, not which player was
+// dealt friendlier sockets.
+const SHARED_SOCKETS = true;
+
+// Points lost when your glass cracks, on top of losing the hand. This is the
+// main luck-tamer: it moves the optimal stopping point earlier, so disciplined
+// play busts far less often and one hot streak can't run away with the game —
+// while pushing past the odds becomes a genuinely losing habit.
+const BUST_PENALTY = 3;
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -87,12 +105,13 @@ class Game {
   constructor(playerInfos, opts = {}) {
     this.bag = freshBag();
     this.discardPile = [];
+    const sharedPattern = SHARED_SOCKETS ? makePattern() : null;
     this.players = playerInfos.map((p, seat) => ({
       id: p.id,
       name: p.name,
       seat,
       window: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
-      sockets: makePattern(),
+      sockets: sharedPattern ? { ...sharedPattern } : makePattern(),
       score: 0,
       spectrums: 0,
       busts: 0,
@@ -184,10 +203,11 @@ class Game {
       // No prism to spend — the glass cracks.
       this.hand.push(shard);
       this.emit('reveal', { seat: p.seat, shard, crack: true });
+      p.busts++;
+      p.score -= BUST_PENALTY;
       this.discardPile.push(...this.hand);
       this.hand = [];
-      p.busts++;
-      this.emit('bust', { seat: p.seat, name: p.name });
+      this.emit('bust', { seat: p.seat, name: p.name, points: BUST_PENALTY });
       this.advanceTurn();
       return;
     }
@@ -251,7 +271,8 @@ class Game {
     let v = 1;
     for (let rr = r - 1; rr >= 0 && p.window[rr][c] !== null; rr--) v++;
     for (let rr = r + 1; rr < ROWS && p.window[rr][c] !== null; rr++) v++;
-    return (h > 1 && v > 1) ? h + v : Math.max(h, v);
+    const pts = (h > 1 && v > 1) ? h + v : Math.max(h, v);
+    return Math.min(pts, CHAIN_CAP);
   }
 
   place(playerId, handIndex, r, c) {
@@ -330,7 +351,10 @@ class Game {
     const n = this.players.length;
     for (let step = 1; step <= n; step++) {
       const seat = (this.turnSeat + step) % n;
-      const wrapped = this.turnSeat + step >= n;
+      // A round wraps when the turn crosses back to the START seat — not seat 0.
+      // Wrapping at seat 0 ended games early whenever the starter (any seat but
+      // 0) finished, robbing later seats of the equalizing turn they're promised.
+      const wrapped = seat === this.startSeat;
       if (wrapped) {
         if (this.finishTriggered || this.round >= MAX_ROUNDS) {
           this.endGame();
@@ -418,6 +442,9 @@ class Game {
         spectrumTiers: SPECTRUM_TIERS,
         matchBonus: MATCH_BONUS,
         chainScoring: CHAIN_SCORING,
+        chainCap: CHAIN_CAP,
+        sharedSockets: SHARED_SOCKETS,
+        bustPenalty: BUST_PENALTY,
         diagBonus: DIAG_BONUS,
         finishBonus: FINISH_BONUS,
         discardPenalty: DISCARD_PENALTY,

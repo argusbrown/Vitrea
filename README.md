@@ -68,7 +68,9 @@ On your turn, draw glass shards from the kiln one at a time. Every shard is
 revealed to all.
 
 - **Crack!** Draw a colour you already hold this turn and your glass shatters —
-  you lose every shard you drew and your turn ends.
+  you lose every shard you drew **and 3 points**, and your turn ends. The bag
+  contents are public, so the crack risk is always knowable: reading the odds
+  and stopping in time is the game's core skill.
 - **Prism shield.** A **prism** is a wild. If you draw a colour you already hold
   but have a prism in hand, the prism is spent to absorb the clash instead of
   cracking — you keep going, minus one prism. Prisms never clash with each other,
@@ -81,8 +83,10 @@ revealed to all.
   then set them into your 5×5 window. Touching shards may never share a colour (a
   prism sits anywhere), so a line of glass is always a mix of colours.
 - **Build bright lines.** Each shard scores the length of the unbroken line it
-  extends — both directions where a row and a column cross. A lone shard scores 1,
-  so build long, connected lines.
+  extends — both directions where a row and a column cross, capped at **5**
+  points per shard. A lone shard scores 1, so build long, connected lines.
+- **A fair race.** Every player's window carries the **same socket pattern**, so
+  you're all chasing the same targets — a score gap reflects play, not the deal.
 - **Discarding costs you.** If a shard has no legal cell — or you simply don't
   want it — you may discard it, but each discarded shard costs **−1** point. Place
   when you can; throw glass away only when you must.
@@ -91,11 +95,12 @@ revealed to all.
 
 | | |
 |---|---|
-| set a shard in your window | **+ line length** — the unbroken line it extends, both directions where a row and column cross |
-| socket filled with its matching colour | **+3** |
+| set a shard in your window | **+ line length** — the unbroken line it extends, both directions where a row and column cross, max 5 per shard |
+| socket filled with its matching colour (all windows share one socket pattern) | **+3** |
 | completed single-colour diagonal, either corner-to-corner (prism is wild) | **+8** |
 | bank 4 / 5 / all 6 colours in a turn (6 = Perfect Spectrum) | **+3 / +6 / +12** |
-| first to finish their window | **+10** |
+| first to finish their window | **+3** |
+| your glass cracks | **−3** |
 | each shard discarded | **−1** |
 
 When someone completes their window, the round is played out so all have had
@@ -125,6 +130,8 @@ equal turns — then the brightest window wins.
 
 ```bash
 npm test                  # monte-carlo + unit tests for the game engine
+node test/balance.sim.js  # luck-vs-skill balance harness: bot-vs-bot games
+                          # reporting margins, blowout rates and skill win rate
 node test/browser.e2e.js  # full P2P game in two headless phone browsers,
                           # incl. a mid-game host reload; needs:
                           # npm i --no-save peer playwright

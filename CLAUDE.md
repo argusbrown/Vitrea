@@ -57,6 +57,9 @@ worker/                 Cloudflare Worker that mints short-lived TURN credential
                         (direct connections, no relay).
 test/
   game.test.js          monte-carlo + unit tests for the engine (npm test).
+  balance.sim.js        luck-vs-skill balance harness: bot-vs-bot games report
+                        margin/blowout/seat-bias/skill metrics; --patch A/Bs
+                        engine constants. Run it for any rule/tuning change.
   browser.e2e.js        full P2P game in 2 headless browsers w/ local PeerJS.
   endscreen.shot.js     screenshots the end screen with 4 players.
 .github/workflows/pages.yml   deploy public/ to Pages on push to main; stamps version.
